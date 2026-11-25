@@ -1,0 +1,507 @@
+[
+  {
+    "ch": 0,
+    "title": "Tábuas por vão",
+    "teach": "Multiplicar reúne grupos iguais. Quatro vãos de três tábuas pedem 4 × 3 = 12 tábuas. Ao final, subtraia o material que já está no depósito.",
+    "task": "A ponte terá 3 vãos de 4 tábuas. Há 5 no depósito. Separe apenas as tábuas que faltam.",
+    "type": "dial",
+    "opts": [
+      0,
+      20
+    ],
+    "answer": 7,
+    "hints": "Conte os três grupos de quatro. Depois retire as cinco que já estão aqui.",
+    "solution": "3 × 4 − 5 = 7. A primeira carga chegou ao andaime."
+  },
+  {
+    "ch": 0,
+    "title": "A parte de cada margem",
+    "teach": "O denominador divide o todo em partes iguais. O numerador conta quantas usar. Para achar 3/4 de 20, divida 20 por 4 e multiplique por 3.",
+    "task": "O trecho leste usa 3/4 de um lote de 16 estacas. Mova o marcador até a quantidade reservada.",
+    "type": "dial",
+    "opts": [
+      0,
+      20
+    ],
+    "answer": 12,
+    "hints": "Cada quarto de 16 tem 4 estacas. A margem leste recebe três desses grupos.",
+    "solution": "16 ÷ 4 × 3 = 12 estacas para a margem leste."
+  },
+  {
+    "ch": 0,
+    "title": "Reserva de cheia",
+    "teach": "Porcentagem é uma fração de 100. 25% equivale a um quarto e 10% a um décimo. Uma reserva é material adicional ao que já foi contado.",
+    "task": "A obra usa 20 cordas. Separe uma reserva extra de 25% para as cheias.",
+    "type": "dial",
+    "opts": [
+      0,
+      25
+    ],
+    "answer": 5,
+    "hints": "Divida as vinte cordas em quatro grupos iguais. Uma reserva de 25% corresponde a um desses grupos.",
+    "solution": "20 × 25/100 = 5 cordas de reserva."
+  },
+  {
+    "ch": 0,
+    "title": "O esquadro da portalada",
+    "teach": "Um triângulo retângulo tem um ângulo de 90°. Barras de 3, 4 e 5 unidades formam um: 3² + 4² = 5². A barra maior fica oposta ao ângulo reto.",
+    "task": "Escolha a armação que fará um canto reto para a portalada.",
+    "type": "pick",
+    "opts": [
+      "Barras 3, 3 e 3",
+      "Barras 3, 4 e 5",
+      "Barras 2, 3 e 6"
+    ],
+    "answer": 1,
+    "hints": [
+      "Três lados iguais formam ângulos de 60°. Procure o conjunto que satisfaz a relação dos quadrados.",
+      "",
+      "2 + 3 é menor que 6. Essas barras sequer fecham um triângulo."
+    ],
+    "solution": "9 + 16 = 25. A armação sustenta o vão sem torcer."
+  },
+  {
+    "ch": 0,
+    "title": "O contrapeso",
+    "teach": "Uma equação representa equilíbrio. Em 2x + 2 = 10, retire 2 dos dois lados e divida por 2. Cada caixa pesa 4.",
+    "task": "Duas pedras de massa igual e um peso de 4 kg equilibram 18 kg. Regule a massa de cada pedra.",
+    "type": "dial",
+    "opts": [
+      0,
+      18
+    ],
+    "answer": 7,
+    "hints": "Desconte os 4 kg conhecidos. Divida os 14 restantes entre as duas pedras.",
+    "solution": "2 × 7 + 4 = 18. A ponte pode baixar."
+  },
+  {
+    "ch": 1,
+    "title": "As vozes do cais",
+    "teach": "O narrador oferece pistas. Separe o que está escrito da inferência que as pistas sustentam. «Só as mãos das lavadeiras ficaram azuis; no mapa novo, o rio é de anil.»",
+    "task": "Que hipótese merece investigação no arquivo?",
+    "type": "pick",
+    "opts": [
+      "As lavadeiras ajudaram a traçar o rio.",
+      "A tinta prova que o rio era venenoso.",
+      "O mapa foi feito sem testemunhas."
+    ],
+    "answer": 0,
+    "hints": [
+      "",
+      "O verso liga o azul à tinta e às mãos. Não há sinal de veneno.",
+      "As mãos tingidas são um indício de participação."
+    ],
+    "solution": "A coincidência da cor sugere autoria. O registro da oficina permitirá verificar a hipótese."
+  },
+  {
+    "ch": 1,
+    "title": "Uma ordem, duas leituras",
+    "teach": "O verbo concorda com o núcleo do sujeito. Em «as cartas da guarda chegaram», o núcleo plural é «cartas». O complemento «da guarda» não altera o número.",
+    "task": "Escolha a inscrição que identifica as autoras no plural.",
+    "type": "pick",
+    "opts": [
+      "As marcas do mapa revela as autoras.",
+      "As marcas do mapa revelam as autoras.",
+      "A marcas do mapa revelam as autoras."
+    ],
+    "answer": 1,
+    "hints": [
+      "O núcleo «marcas» está no plural; «revela» está no singular.",
+      "",
+      "O artigo acompanha «marcas» no plural."
+    ],
+    "solution": "«As marcas ... revelam» conserva a concordância do sujeito com o verbo."
+  },
+  {
+    "ch": 1,
+    "title": "A palavra raspada",
+    "teach": "Em palavras como «campo» e «tambor», escrevemos M antes de P e B para representar a nasalidade. Compare «canto», com N antes de T.",
+    "task": "Restaure a linha que o copista apagou.",
+    "type": "pick",
+    "opts": [
+      "Ao tanbor, tragam o mapa do canpo.",
+      "Ao tambor, tragam o mapa do campo.",
+      "Ao tambôr, tragam o mapa do camppo."
+    ],
+    "answer": 1,
+    "hints": [
+      "Observe as letras antes de B e de P. Nesta posição usamos M.",
+      "",
+      "«Tambor» dispensa acento e «campo» tem um único P."
+    ],
+    "solution": "Tambor e campo seguem a convenção. O verso volta a ser legível."
+  },
+  {
+    "ch": 1,
+    "title": "Um rio de prata",
+    "teach": "Metáfora aproxima ideias sem dizer «como». «A lua é uma moeda» sugere forma e brilho. Uma imagem poética ganha sentido no restante do texto.",
+    "task": "«Quando a noite cai, a ponte é um fio de prata.» Qual pista o vigia deve seguir?",
+    "type": "pick",
+    "opts": [
+      "Arrancar prata das vigas.",
+      "Procurar um costureiro.",
+      "Observar o reflexo da lua na travessia."
+    ],
+    "answer": 2,
+    "hints": [
+      "A luz da noite é a pista. O verso não descreve o material da ponte.",
+      "O fio aproxima a forma da ponte de uma linha brilhante.",
+      ""
+    ],
+    "solution": "Ao luar, a faixa de luz aponta para a passagem sob o arco."
+  },
+  {
+    "ch": 1,
+    "title": "Carta às duas margens",
+    "teach": "Um aviso público precisa indicar a ação, o lugar e o motivo. Exemplo: «Reúnam as famílias na praça porque a maré sobe.» Releia seu texto imaginando um leitor que acabou de chegar.",
+    "task": "Escreva um aviso com um pedido de ação, o lugar e a razão para proteger o mapa. Depois revise seu próprio texto.",
+    "type": "write",
+    "opts": [],
+    "answer": 0,
+    "hints": "Experimente iniciar com um verbo, nomear um lugar e ligar o motivo com «porque».",
+    "solution": "Bento guarda seu aviso no diário público da expedição."
+  },
+  {
+    "ch": 2,
+    "title": "Uma fonte por vez",
+    "teach": "Uma fonte primária foi produzida no período estudado. Uma interpretação posterior pode compará-la com outras fontes. Pergunte quem produziu o documento e com que finalidade.",
+    "task": "Qual peça investigar primeiro para saber como a água foi repartida naquele ano?",
+    "type": "pick",
+    "opts": [
+      "Romance escrito dois séculos depois",
+      "Lista de distribuição datada daquele ano",
+      "Canção moderna sobre a cisterna"
+    ],
+    "answer": 1,
+    "hints": [
+      "O romance ajuda a estudar a memória posterior. Busque um registro contemporâneo.",
+      "",
+      "A canção mostra como o passado é lembrado hoje."
+    ],
+    "solution": "A lista é contemporânea à distribuição. Os números ainda precisam ser confrontados com outros registros."
+  },
+  {
+    "ch": 2,
+    "title": "O arquivo de argila",
+    "teach": "Na antiga Mesopotâmia, escribas registraram estoques e entregas em tabuletas de argila. Canais de irrigação exigiam coordenação de trabalho. Um registro administrativo informa quantidades, mas raramente conta toda a experiência de quem trabalhou.",
+    "task": "O selo de Ocre imita um antigo arquivo de grãos. Qual conclusão o inventário sustenta?",
+    "type": "pick",
+    "opts": [
+      "A colheita era distribuída igualmente.",
+      "Todos sabiam escrever.",
+      "Alguém contabilizava entradas e saídas."
+    ],
+    "answer": 2,
+    "hints": [
+      "Um total armazenado não mostra quem recebeu cada parte.",
+      "A presença de escrita não demonstra alfabetização universal.",
+      ""
+    ],
+    "solution": "O registro atesta contabilidade. A distribuição exige outras fontes."
+  },
+  {
+    "ch": 2,
+    "title": "A terra e o moinho",
+    "teach": "Em muitos senhorios da Europa medieval, famílias camponesas cultivavam a terra e deviam rendas ou serviços ao senhor. As obrigações variavam com a época e o lugar.",
+    "task": "O livro do moinho registra dias de trabalho devidos pelo uso da terra. Como catalogá-lo?",
+    "type": "pick",
+    "opts": [
+      "Obrigação senhorial documentada",
+      "Contrato universal de salário mensal",
+      "Prova de que toda aldeia tinha a mesma lei"
+    ],
+    "answer": 0,
+    "hints": [
+      "",
+      "O documento fala de serviço devido, sem mencionar salário.",
+      "Um caso local não estabelece uma lei para todas as aldeias."
+    ],
+    "solution": "O conselho reconhece uma relação local de dependência e procura a voz dos trabalhadores."
+  },
+  {
+    "ch": 2,
+    "title": "Camadas de mudança",
+    "teach": "Uma linha do tempo organiza evidências por data. Uma obra de irrigação pode alterar colheitas e regras sociais; a sequência por si só não prova uma causa.",
+    "task": "Ordene os registros de Ocre do mais antigo ao mais recente para reabrir o inquérito.",
+    "type": "order",
+    "opts": [
+      "Ano 112 · Abertura do canal",
+      "Ano 128 · Cobrança no cais",
+      "Ano 145 · Petição das famílias"
+    ],
+    "answer": [
+      0,
+      1,
+      2
+    ],
+    "hints": "Leia as datas. O canal já existia quando a cobrança começou.",
+    "solution": "A petição veio depois da cobrança. Os depoimentos explicam por que as famílias protestaram."
+  },
+  {
+    "ch": 2,
+    "title": "Quem decide as regras?",
+    "teach": "Em 1789, na França, a Declaração dos Direitos do Homem e do Cidadão contestou privilégios de nascimento. O direito proclamado não se estendeu igualmente a todos na prática. Uma petição local pode usar o princípio da igualdade para questionar uma cobrança desigual.",
+    "task": "O conselho quer comparar o conflito de Ocre com a Revolução Francesa. Qual comparação respeita as evidências?",
+    "type": "pick",
+    "opts": [
+      "A declaração acabou de imediato com toda exclusão.",
+      "Ambos permitem discutir privilégios e igualdade de direitos.",
+      "Ocre participou da Revolução Francesa."
+    ],
+    "answer": 1,
+    "hints": [
+      "A proclamação de um direito e sua aplicação prática são processos diferentes.",
+      "",
+      "Ocre é um reino da narrativa. A comparação histórica está no conflito sobre privilégios."
+    ],
+    "solution": "Nilo registra o paralelo sem confundir a história documentada da França com a história de Ocre."
+  },
+  {
+    "ch": 3,
+    "title": "A casa no quadrante",
+    "teach": "Uma coordenada combina coluna e linha. Neste mapa, o norte fica para cima; A–E crescem para leste e 1–5 crescem para sul. De B2, dois passos a leste levam a D2.",
+    "task": "Marque o abrigo. Parta de B2, siga dois quadrados a leste e um para o sul.",
+    "type": "grid",
+    "opts": [],
+    "answer": "D3",
+    "hints": "Mantenha a linha ao caminhar para leste. O passo ao sul aumenta a linha de 2 para 3.",
+    "solution": "D3 abriga as famílias que haviam desaparecido da carta real."
+  },
+  {
+    "ch": 3,
+    "title": "Escala da trilha",
+    "teach": "Na escala 1:10.000, 1 cm no papel vale 10.000 cm no terreno, ou 100 m. Multiplique a medida no mapa pela distância correspondente a 1 cm.",
+    "task": "Uma trilha mede 4 cm nessa escala. Selecione a distância real para o correio.",
+    "type": "pick",
+    "opts": [
+      "40 m",
+      "400 m",
+      "4 km"
+    ],
+    "answer": 1,
+    "hints": [
+      "Cada centímetro corresponde a 100 metros, não a 10.",
+      "",
+      "Quatro quilômetros equivalem a 4.000 metros."
+    ],
+    "solution": "4 × 100 m = 400 m. O mensageiro pode calcular o tempo de ida."
+  },
+  {
+    "ch": 3,
+    "title": "Ler uma encosta",
+    "teach": "Curvas de nível ligam pontos de mesma altitude. Para o mesmo intervalo vertical, curvas próximas indicam subida mais íngreme. Um colo é uma passagem mais baixa entre elevações.",
+    "task": "Escolha a rota de menor inclinação para levar os feridos ao farol.",
+    "type": "pick",
+    "opts": [
+      "Encosta com curvas muito juntas",
+      "Parede vertical sobre o rio",
+      "Colo com curvas bem espaçadas"
+    ],
+    "answer": 2,
+    "hints": [
+      "Curvas próximas concentram o desnível em pouca distância.",
+      "Uma parede vertical é a mudança de altitude mais abrupta.",
+      ""
+    ],
+    "solution": "O colo permite a travessia com ganho de altitude mais gradual."
+  },
+  {
+    "ch": 3,
+    "title": "Chuva na vertente",
+    "teach": "Ar úmido pode subir ao encontrar uma serra, esfriar e condensar. A vertente voltada ao vento é o barlavento. A sotavento, o ar que desce costuma ficar mais seco. Clima descreve padrões de muitos anos.",
+    "task": "O vento úmido vem do oeste. Em qual vertente procurar um antigo coletor de neblina?",
+    "type": "pick",
+    "opts": [
+      "Oeste, exposta ao vento úmido",
+      "Leste, sempre mais chuvosa",
+      "Qualquer uma, pois o relevo não interfere"
+    ],
+    "answer": 0,
+    "hints": [
+      "",
+      "Nesta serra, o lado leste está a sotavento e tende a receber ar mais seco.",
+      "O relevo força a subida do ar e influencia a condensação."
+    ],
+    "solution": "O coletor de barlavento conserva a inscrição que faltava ao mapa."
+  },
+  {
+    "ch": 3,
+    "title": "Onde começa uma região?",
+    "teach": "Regionalizar é agrupar lugares por um critério. Uma região climática reúne padrões de temperatura e chuva. Uma bacia hidrográfica reúne terras drenadas para a mesma saída de água. Fronteiras políticas podem atravessar uma bacia.",
+    "task": "A enchente atravessa dois reinos. Escolha o recorte que ajudará a prever a chegada da água ao cais.",
+    "type": "pick",
+    "opts": [
+      "Terras administradas por um só conselho",
+      "Apenas aldeias com o mesmo nome",
+      "Toda a bacia a montante do cais"
+    ],
+    "answer": 2,
+    "hints": [
+      "A água pode atravessar a fronteira administrativa.",
+      "Os nomes das aldeias não determinam o rumo da água.",
+      ""
+    ],
+    "solution": "A carta passa a incluir os afluentes dos dois lados da divisa."
+  },
+  {
+    "ch": 4,
+    "title": "A margem viva",
+    "teach": "Plantas ribeirinhas reduzem erosão com suas raízes. Vegetação nativa oferece abrigo e alimento a várias espécies. Só estocar peixes não resolve a perda de hábitat.",
+    "task": "Escolha uma intervenção para o barranco que está desmoronando.",
+    "type": "pick",
+    "opts": [
+      "Soltar mais peixes na corrente",
+      "Replantar vegetação nativa na margem",
+      "Retirar as raízes restantes"
+    ],
+    "answer": 1,
+    "hints": [
+      "Aumentar a população não recupera o barranco nem o abrigo.",
+      "",
+      "As raízes ajudam a segurar o solo."
+    ],
+    "solution": "O novo viveiro estabiliza a margem e devolve abrigo aos animais."
+  },
+  {
+    "ch": 4,
+    "title": "A energia da corrente",
+    "teach": "Produtores, como algas, usam energia luminosa para formar matéria orgânica. Consumidores obtêm energia comendo outros seres. Cada seta da cadeia vai do alimento para quem o consome.",
+    "task": "Monte o caminho de transferência de energia observado no lago.",
+    "type": "order",
+    "opts": [
+      "Alga verde",
+      "Larva que come algas",
+      "Peixe que come larvas"
+    ],
+    "answer": [
+      0,
+      1,
+      2
+    ],
+    "hints": "Comece pelo produtor. A larva recebe energia da alga e o peixe recebe energia da larva.",
+    "solution": "A equipe protege os três níveis da cadeia alimentar."
+  },
+  {
+    "ch": 4,
+    "title": "O filtro de areia",
+    "teach": "Na decantação, partículas mais densas se depositam no fundo. A filtração retém parte dos sólidos suspensos. Substâncias dissolvidas podem atravessar um filtro simples.",
+    "task": "Seu filtro reteve areia, mas o corante dissolvido passou. Como registrar a observação?",
+    "type": "pick",
+    "opts": [
+      "A amostra ficou potável.",
+      "O corante virou areia.",
+      "O filtro separou sólidos, mas o corante permaneceu."
+    ],
+    "answer": 2,
+    "hints": [
+      "A aparência da água não demonstra potabilidade.",
+      "O corante atravessou o filtro dissolvido na água.",
+      ""
+    ],
+    "solution": "Dandara identifica duas misturas diferentes e mantém a amostra apenas para estudo."
+  },
+  {
+    "ch": 4,
+    "title": "A roda do laboratório",
+    "teach": "Na queda, água perde energia potencial gravitacional e ganha movimento. Ao empurrar pás, transfere energia à roda. Parte se dissipa em som e calor.",
+    "task": "Ordene as etapas para acionar a bomba do viveiro.",
+    "type": "order",
+    "opts": [
+      "Água no reservatório elevado",
+      "Água desce pela calha",
+      "Pás recebem a corrente"
+    ],
+    "answer": [
+      0,
+      1,
+      2
+    ],
+    "hints": "Comece onde a água ainda tem altura. As pás giram quando recebem a corrente.",
+    "solution": "A roda gira e o viveiro volta a receber água."
+  },
+  {
+    "ch": 4,
+    "title": "O alfabeto da água",
+    "teach": "Um símbolo químico identifica um elemento. Em H₂O, H é hidrogênio e O é oxigênio. O índice 2 indica dois átomos de hidrogênio por molécula. Sem índice escrito, há um átomo de oxigênio. Três moléculas contêm seis átomos de hidrogênio.",
+    "task": "Monte o modelo do laboratório com quatro moléculas de água. Separe as peças correspondentes a átomos de hidrogênio.",
+    "type": "dial",
+    "opts": [
+      0,
+      16
+    ],
+    "answer": 8,
+    "hints": "Cada molécula pede duas peças H. Conte quatro grupos de duas.",
+    "solution": "4 × 2 = 8 átomos de hidrogênio. As quatro peças de oxigênio completam o modelo."
+  },
+  {
+    "ch": 5,
+    "title": "Rotina de partida",
+    "teach": "Um algoritmo é uma sequência finita de instruções precisas. A ordem importa quando uma etapa depende de outra. A eclusa só permite abrir a porta se a pressão estiver igualada.",
+    "task": "Programe a abertura segura da eclusa.",
+    "type": "order",
+    "opts": [
+      "Fechar a entrada",
+      "Igualar a pressão",
+      "Abrir a porta"
+    ],
+    "answer": [
+      0,
+      1,
+      2
+    ],
+    "hints": "Primeiro isole a entrada. A porta só pode abrir depois que a pressão se igualar.",
+    "solution": "A eclusa executa as três instruções na ordem planejada."
+  },
+  {
+    "ch": 5,
+    "title": "Relé sob condição",
+    "teach": "Uma condição decide qual ramo executar. Em «se nível > 6, abrir; senão, fechar», o valor 6 vai para o segundo ramo, pois > exclui a igualdade.",
+    "task": "O medidor marca exatamente 6. Que comando a rotina atual envia?",
+    "type": "pick",
+    "opts": [
+      "Abrir",
+      "Fechar",
+      "Executar os dois comandos"
+    ],
+    "answer": 1,
+    "hints": [
+      "A condição pede um valor estritamente maior que 6.",
+      "",
+      "Somente um dos dois ramos é executado."
+    ],
+    "solution": "6 > 6 é falso. O relé fecha e evita um pulso fora de hora."
+  },
+  {
+    "ch": 5,
+    "title": "O padrão de cobre",
+    "teach": "Um ciclo repete um bloco na mesma ordem. Na fita âmbar, azul, azul, cada quarto pulso reinicia o bloco. Prever o próximo sinal permite agir durante o combate.",
+    "task": "Reconstrua um bloco do escudo: o primeiro relé aquece, depois vêm dois pulsos frios, fraco e forte.",
+    "type": "order",
+    "opts": [
+      "Âmbar",
+      "Azul fraco",
+      "Azul forte"
+    ],
+    "answer": [
+      0,
+      1,
+      2
+    ],
+    "hints": "O âmbar inicia o bloco. O azul forte é o último pulso antes da abertura.",
+    "solution": "O escudo do dragão ficará exposto após o segundo pulso azul."
+  },
+  {
+    "ch": 5,
+    "title": "Um laço que termina",
+    "teach": "Um laço repete enquanto sua condição for verdadeira. Se o contador começa em 0 e cresce de 2 em 2, assume 0, 2, 4... Teste a condição antes de cada repetição.",
+    "task": "Enquanto contador < 8: toque o sino e some 2. Quantas vezes o sino toca?",
+    "type": "dial",
+    "opts": [
+      0,
+      12
+    ],
+    "answer": 4,
+    "hints": "Liste os valores no início de cada volta: 0, 2, 4 e 6. Em 8 o laço já termina.",
+    "solution": "Quatro toques. Pela primeira vez em séculos, a máquina encerra a rotina."
+  }
+]

@@ -1,0 +1,64 @@
+ATLAS DAS BRASAS
+Crônicas das Seis Margens
+
+Abrir o projeto
+Extraia a pasta inteira. No gerenciador de projetos do Godot 4, escolha Importar
+e selecione project.godot. Aguarde a importação dos recursos e pressione F6 com
+a cena Atlas aberta ou F5 em qualquer parte do projeto. A versão utilizada nos
+testes foi Godot 4.7.2, com o renderizador de compatibilidade.
+
+Começar
+Procure Iria na estrada do Junco ou dentro da Oficina das Vigas. Os losangos
+dourados e a bússola do HUD indicam a missão principal. As travessias públicas
+ao norte e ao sul permitem contornar uma ponte fechada. Cada selo recupera a
+travessia central de uma margem. O mapa permite escolher uma região visitada
+perto de um marco de viagem. O segundo selo libera essa viagem à distância.
+
+Controles iniciais
+WASD ou setas   Caminhar             Shift       Correr
+E              Interagir            J           Atacar / carregar o arco
+Q              Alternar estilo      K           Bloquear
+Espaço         Esquivar             R           Técnica especial
+H              Beber poção          I           Mochila e fabricação
+M              Mapa                 Tab         Diário e descobertas
+Esc            Pausar ou voltar
+
+O menu de configurações permite mudar teclas, ajustar o volume e reduzir o
+dano recebido. É possível usar o mouse nos painéis ou selecionar os botões
+com Tab e confirmar com Enter. Na mochila, alterne as armas e a magia equipada.
+
+Campanha
+São seis capítulos, 29 trabalhos de campo, seis pedidos de moradores,
+seis templos opcionais e o encontro com Aster na Caldeira. Os mestres explicam
+cada conceito. O diário indica o local de prática. Um erro abre uma dica e
+permite repetir a tentativa. A enciclopédia conserva os ensinamentos e permite
+refazer as atividades. A carta escrita em Lume e as relações com os mestres
+ficam na seção Relações e cartas. A escrita usa autorrevisão por três critérios.
+
+Salvamento
+A jornada é salva automaticamente e pelo menu de pausa. O arquivo atlas_v1.json
+e a cópia anterior ficam na pasta de dados do usuário do Godot para este jogo.
+O jogo trata uma queda em combate como retorno à vila e conserva as descobertas.
+
+Organização
+cenas/       Cena inicial
+scripts/     Campanha, persistência, recursos e combate
+personagens/ Aventureiro, mestres, moradores, inimigos e retratos
+mapas/       TileSet, regiões, interiores, templos e colisões
+interfaces/  Menu, HUD, diálogos, mapa, mochila e caderno
+animacoes/   Folhas de sprites em quadros transparentes
+recursos/    Conteúdos das missões e dos 29 trabalhos de campo em português
+audio/       Tema instrumental e efeitos
+testes/      Percurso de integração pelos seis capítulos e pelo epílogo
+
+Teste de integração no Linux
+Na pasta deste projeto com o Godot disponível como godot:
+  godot --headless --editor --import
+  XDG_DATA_HOME="$(mktemp -d)" godot --headless --fixed-fps 60 res://testes/Campanha.tscn
+O teste interrompe a execução se encontrar uma jornada gravada na área de dados.
+
+Créditos
+Ilustrações, retratos e bases dos sprites foram produzidos com o gerador de
+imagens do GPT. Os quadros, terrenos, mapa, composição musical e efeitos
+foram preparados para este projeto. As fontes Liberation acompanham sua
+licença em interfaces/LICENCA-fontes.txt.
