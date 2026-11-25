@@ -1,4 +1,4 @@
-extends "res://interfaces/aprendizagem.gd"
+extends "res://interfaces/rondas.gd"
 
 const STANCE_ICONS=[preload("res://interfaces/icones/lamina.png"),preload("res://interfaces/icones/arco.png"),preload("res://interfaces/icones/magia.png")]
 const Map=preload("res://interfaces/cartografia.gd")
@@ -23,6 +23,9 @@ var book_page=0
 var book_ch=0
 var bearing:Label
 var touch_controls
+var boss_card:Panel
+var boss_portrait:TextureRect
+var boss_health:ColorRect
 var boss_label:Label
 
 func update_hud():
@@ -57,9 +60,12 @@ func update_hud():
 			b.focus_mode=Control.FOCUS_NONE
 	prompt_panel=box(hud,300,424,360,39,Color("#121c2beb"),LINE)
 	prompt=label(hud,"",304,426,352,34,17,PALE,true,HORIZONTAL_ALIGNMENT_CENTER)
-	boss_label=label(hud,"",251,100 if touch else 15,386,53,18,GOLD,true,HORIZONTAL_ALIGNMENT_CENTER)
-	boss_label.add_theme_constant_override("outline_size",5)
-	boss_label.add_theme_color_override("font_outline_color",INK)
+	boss_card=box(hud,261,100 if touch else 14,351,54,Color("#181c29ed"),LINE)
+	boss_portrait=tex(boss_card,"res://personagens/bestiario/g0.png",4,4,54,45)
+	boss_label=label(boss_card,"",68,4,276,38,15,GOLD,true)
+	line(boss_card,68,44,270,4,Color("#45303b"))
+	boss_health=line(boss_card,68,44,270,4,Color("#df886c"))
+	boss_card.hide()
 	var bx=336 if touch else 611
 	box(hud,bx,486,287 if touch else 334,38,Color("#14202ce8"),LINE)
 	glyph(hud,"rumo",bx+10,494,22)
@@ -87,6 +93,8 @@ func hud_tick():
 	var c=game.region()
 	region_label.text=("Caldeira de Aster" if c==6 else Saga.regions[c].place).to_upper()
 	objective_label.text="Siga a inscrição e abra o relicário." if game.world.room_type=="crypt" else Saga.objective()
+	if int(Saga.data.care_route)>=0:
+		objective_label.text="Saia para a estrada." if game.world.interior else "Ronda · "+Saga.rounds[int(Saga.data.care_route)].place
 	level_label.text="Nível %d"%Saga.level()
 	xpbar.size.x=(int(Saga.data.xp)%100)*2.1
 	stance.texture=STANCE_ICONS[int(Saga.data.style)]
@@ -95,7 +103,7 @@ func hud_tick():
 	trail.follow(game.hero.position,destination)
 	var delta=trail.next_point-game.hero.position
 	var directions=["Leste","Sudeste","Sul","Sudoeste","Oeste","Noroeste","Norte","Nordeste"]
-	if Saga.data.won and not game.world.interior:
+	if Saga.data.won and not game.world.interior and int(Saga.data.care_route)<0:
 		bearing.text="Exploração livre"
 		trail.visible=false
 	elif game.hero.position.distance_to(destination)<32:bearing.text="Você chegou ao objetivo"
@@ -108,12 +116,21 @@ func hud_tick():
 	if n:
 		var s=(Saga.regions[n.c].resident if n.resident else Saga.regions[n.c].name) if n is Mentor else n.label
 		prompt.text=("Interagir · "+s) if is_instance_valid(touch_controls) else "[%s]  %s"%[Saga.keyname("use"),s]
-	boss_label.text=""
+	var nearest_boss=null
+	var max_distance=240.0
 	for e in game.enemies:
-		if is_instance_valid(e) and not e.dead and e.boss and game.hero.position.distance_to(e.position)<240:
-			boss_label.text=("Aster · Escudo pulsante" if e.shielded() else "Aster · Escudo aberto") if e.kind==3 else "Guardião do selo"
-			boss_label.text+="\n%d / %d"%[e.hp,e.hp_max]
-			break
+		if not is_instance_valid(e) or e.dead or not e.boss:continue
+		var distance=game.hero.position.distance_to(e.position)
+		if distance<max_distance:
+			nearest_boss=e
+			max_distance=distance
+	boss_card.visible=nearest_boss!=null
+	if nearest_boss!=null:
+		var caption=nearest_boss.bestiary_name()
+		if nearest_boss.kind==3:caption+=" · Escudo pulsante" if nearest_boss.shielded() else " · Escudo aberto"
+		boss_label.text="%s   %d/%d"%[caption,nearest_boss.hp,nearest_boss.hp_max]
+		boss_portrait.texture=nearest_boss.portrait()
+		boss_health.size.x=270.0*nearest_boss.hp/nearest_boss.hp_max
 
 func footer():
 	button(view,"Voltar à aventura",108,449,191,38,play,true)
@@ -147,7 +164,7 @@ func tutorial():
 		glyph(view,cards[i][0],x+17,186,32)
 		label(view,cards[i][1],x+17,228,205,33,24,GOLD,true)
 		label(view,cards[i][2],x+17,271,203,89,17,PALE)
-	label(view,"O diário guarda as missões e os ensinamentos. A jornada é salva automaticamente.",109,386,740,51,16,MUTED)
+	label(view,"Abra o Caderno de rondas no diário para explorar os postos de enfermagem com Lia.",109,386,740,51,16,MUTED)
 	footer()
 	focus_default()
 
@@ -172,6 +189,7 @@ func journal():
 	button_icon(button(view,"Habilidades",108,396,223,40,skills),"lamina")
 	button_icon(button(view,"Enciclopédia",347,396,223,40,codex),"diario")
 	button_icon(button(view,"Relações e cartas",586,396,265,40,memories),"interagir")
+	button(view,"Caderno de rondas · %d/6"%care_count(),586,449,265,38,care_index)
 	footer()
 	focus_default()
 
@@ -187,27 +205,42 @@ func memories():
 
 func bag():
 	panel_page("bag","Equipamentos e oficina","Mochila")
-	label(view,"Equipamento",108,149,332,32,23,GOLD,true)
-	label(view,"%s   •   %s\nAcessório: %s"%[Saga.WEAPONS[Saga.data.weapon],"Cota de malha" if Saga.data.armor else "Túnica de viagem",Saga.data.charm if Saga.data.charm!="" else "Nenhum"],108,187,342,62,16)
-	button(view,"Alternar arma",108,263,162,36,func():
+	line(view,467,152,1,259,LINE)
+	label(view,"Equipamento",108,146,332,32,23,GOLD,true)
+	label(view,"%s   ·   %s"%[Saga.WEAPONS[Saga.data.weapon],"Cota de malha" if Saga.data.armor else "Túnica de viagem"],108,185,340,32,16)
+	label(view,"Acessório · "+(Saga.data.charm if Saga.data.charm!="" else "Nenhum"),108,218,342,31,15,MUTED)
+	button(view,"Alternar arma",108,263,162,38,func():
 		var a=Saga.data.weapons
 		Saga.data.weapon=int(a[(a.find(Saga.data.weapon)+1)%a.size()])
 		Saga.save()
 		bag())
-	button(view,"Acessórios",280,263,165,36,accessories)
-	label(view,"Oficina de campanha",487,149,360,32,23,GOLD,true)
-	label(view,"%d ervas    •    %d minérios    •    %d poções"%[Saga.data.herbs,Saga.data.ore,Saga.data.potions],487,192,360,40,16)
+	button(view,"Acessórios",280,263,165,38,accessories)
+	label(view,"Oficina de campanha",487,146,360,32,23,GOLD,true)
+	var resources=[
+		["erva","Ervas",Saga.data.herbs],
+		["minerio","Minérios",Saga.data.ore],
+		["pocao","Poções",Saga.data.potions]
+	]
+	for i in resources.size():
+		var x=487+i*122
+		var item=resources[i]
+		box(view,x,188,116,51,Color("#24323e"),LINE)
+		glyph(view,item[0],x+7,198,30)
+		label(view,item[1],x+42,192,69,17,13,MUTED)
+		label(view,str(item[2]),x+42,209,69,23,19,PALE,true)
 	for i in 3:
 		var k=["poção","cota","lança"][i]
-		button(view,["Preparar poção   ·   2 ervas","Forjar cota   ·   3 minérios","Forjar lança   ·   4 minérios"][i],487,246+i*47,363,39,func():toast(Saga.craft(k));bag())
-	button(view,"Beber poção",108,315,337,40,func():toast(Saga.drink());bag())
-	button(view,"Magia equipada · "+Saga.data.magic,108,369,337,36,func():
+		var recipe=button(view,["Preparar poção   ·   2 ervas","Forjar cota   ·   3 minérios","Forjar lança   ·   4 minérios"][i],487,255+i*49,360,40,func():toast(Saga.craft(k));bag())
+		button_icon(recipe,["pocao","cota","minerio"][i])
+	button_icon(button(view,"Beber poção",108,315,337,40,func():toast(Saga.drink());bag()),"pocao")
+	var spell=button(view,"Magia equipada · "+Saga.data.magic,108,369,337,38,func():
 		var spells=["lume"]
 		if Saga.has_skill(3):spells.append("égide")
 		if Saga.has_skill(4) or Saga.data.chapter>=5:spells.append("cura")
 		Saga.data.magic=spells[(spells.find(Saga.data.magic)+1)%spells.size()]
 		Saga.save()
 		bag())
+	button_icon(spell,{"lume":"fogo","égide":"escudo","cura":"erva"}.get(Saga.data.magic,"magia"))
 	footer()
 	focus_default()
 
@@ -230,7 +263,8 @@ func skills():
 		var id=i
 		var x=108+(i%2)*376
 		var y=153+floori(i/2.0)*89
-		button(view,Saga.SKILLS[i]+("   ✓" if Saga.has_skill(i) else "   ·   %d pt"%Saga.COSTS[i]),x,y,360,44,func():toast(Saga.train(id));skills())
+		var skill_button=button(view,Saga.SKILLS[i]+("   ✓" if Saga.has_skill(i) else "   ·   %d pt"%Saga.COSTS[i]),x,y,360,44,func():toast(Saga.train(id));skills())
+		button_icon(skill_button,["passo","lamina","arco","escudo","erva","fogo"][i])
 		label(view,desc[i],x+3,y+46,356,26,14,MUTED)
 	footer()
 	focus_default()
@@ -265,7 +299,9 @@ func map_page():
 	button(view,"Próxima região",603,376,246,39,func():map_selection=(map_selection+1)%6;map_page())
 	map.selected.connect(func(c):map_selection=c;map_details())
 	map_details()
-	label(view,"◆   Região selecionada       ●   Sua posição",109,413,480,28,14,MUTED)
+	label(view,"◆ Região     ● Você",109,413,160,28,14,MUTED)
+	tex(view,"res://mapas/margens/insignia.png",260,418,18,20)
+	label(view,"Posto de cuidado",283,413,220,28,14,MUTED)
 	var shown=Saga.settings.get_value("game","trail",true)
 	button(view,"Trilha · "+("visível" if shown else "oculta"),603,448,247,39,func():
 		Saga.settings.set_value("game","trail",not shown)

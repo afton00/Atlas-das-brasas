@@ -7,3 +7,18 @@ RPG educativo de fantasia em português, desenvolvido em Godot 4. A campanha per
 - **Navegador e celular** — a pasta [web](web/) contém a exportação para hospedagem estática, com controles de toque. Uma [edição em HTML único](distribuicao/AtlasDasBrasas-Celular.html) também acompanha o repositório.
 - **Projeto compactado** — baixe o [ZIP dos fontes](distribuicao/AtlasDasBrasas-Projeto.zip) para editar o jogo sem clonar o repositório.
 - **Arte** — as [ilustrações originais](arte-original/) acompanham os sprites, retratos, cenários e quadros de animação tratados no projeto.
+
+## Rondas com a enfermeira Lia
+
+Entre na oficina da Vila do Junco para conversar com Lia ou abra **Diário → Caderno de rondas**. Cada uma das seis regiões tem um posto identificado por uma flâmula turquesa. Após a orientação, marque o destino, explore a cena e decida com a equipe. O registro de cada ronda inclui o que foi observado, o cuidado realizado e a fonte oficial. As rondas são opcionais e podem ser revisitadas.
+
+| Posto | Tema da ronda |
+| --- | --- |
+| Balsa do Junco | Higienização das mãos quando há sujeira visível |
+| Pátio de Lume | Conferência de dois identificadores antes do cuidado |
+| Cisterna de Ocre | Proteção da água potável depois de uma cheia |
+| Pousada da Agulha | Prevenção de quedas com participação da pessoa |
+| Viveiro da Nascente | Eliminação de criadouros de mosquitos |
+| Posto de Basalto | Comunicação de uma urgência e acionamento do SAMU 192 |
+
+A arte incorporada do Atlas.zip segue a ordem das onze pranchas do arquivo. As pranchas 1, 2, 4 e 9 compõem os quadros de movimento e ação do aventureiro. A prancha 3 fornece ícones para a mochila, as habilidades e a interface. As pranchas 5 e 7 fornecem edifícios e vegetação para o mundo. A prancha 8 ilustra as regiões do mapa. As pranchas 6 e 10 compõem guardiões e criaturas regionais. A prancha 11 fornece retratos e personagens para as conversas e os postos.

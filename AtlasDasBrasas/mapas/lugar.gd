@@ -19,6 +19,11 @@ func setup(id:String,title:String,tex:Texture2D,is_solid:bool,shadow:float=10.0)
 	art.texture=tex
 	art.offset=Vector2(0,-tex.get_height()/2.0)
 	add_child(art)
+	if id in ["care","nurse"]:
+		var sign=Sprite2D.new()
+		sign.texture=preload("res://mapas/margens/insignia.png")
+		sign.position=Vector2(round(tex.get_width()*.38),-6)
+		add_child(sign)
 	if solid:
 		var body=StaticBody2D.new()
 		body.collision_layer=1

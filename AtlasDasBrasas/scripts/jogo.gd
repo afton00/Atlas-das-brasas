@@ -212,6 +212,10 @@ func can_travel():
 	return not world.interior and hero.position.distance_to(Saga.origin(region())+World.ARCH)<42
 
 func route_target()->Vector2:
+	var care=int(Saga.data.care_route)
+	if care>=0 and care<Saga.rounds.size():
+		if world.interior:return Vector2(256,291)
+		return Saga.origin(care)+World.CARE_POINTS[care]
 	var c=int(Saga.data.chapter)
 	if world.room_type=="crypt":
 		var st=int(Saga.data.ruins.get(str(world.region),0))
@@ -302,6 +306,8 @@ func interact():
 		else:mentor(c)
 		return
 	match n.tag:
+		"nurse":ui.care_index()
+		"care":ui.care_brief(c)
 		"door":
 			build(true,c,Vector2(256,238))
 			ui.play()

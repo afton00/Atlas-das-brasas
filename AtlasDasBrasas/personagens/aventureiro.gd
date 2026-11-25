@@ -1,5 +1,11 @@
 extends "res://scripts/ator.gd"
 
+const TRAVELER_SHEET=preload("res://animacoes/viajante.png")
+const MOVING_STATES=["idle","walk","run"]
+const ACTION_ROWS=["blade","bow","fire","guard","dodge","hurt","death","ice","interact","sweep","surge"]
+const FRAME_SIZE=Vector2i(72,44)
+static var traveler_frames:SpriteFrames
+
 var game
 var cooldown=0.0
 var invincible=0.0
@@ -27,6 +33,47 @@ func setup(g,pos:Vector2,bounds:Rect2):
 	camera.limit_bottom=int(bounds.end.y)
 	add_child(camera)
 	camera.make_current()
+
+func add_strip(frames:SpriteFrames, key:String, row:int, speed:float, looped:bool, count:int=4):
+	frames.add_animation(key)
+	frames.set_animation_speed(key,speed)
+	frames.set_animation_loop(key,looped)
+	for column in count:
+		var cell=AtlasTexture.new()
+		cell.atlas=TRAVELER_SHEET
+		cell.region=Rect2(Vector2i(column,row)*FRAME_SIZE,FRAME_SIZE)
+		frames.add_frame(key,cell)
+
+func build_traveler_frames():
+	traveler_frames=SpriteFrames.new()
+	var row=0
+	for direction in ["south","west","east","north"]:
+		for state in MOVING_STATES:
+			var speed=4 if state=="idle" else 12 if state=="run" else 8
+			add_strip(traveler_frames,state+"_"+direction,row,speed,true)
+			row+=1
+	for key in ACTION_ROWS:
+		add_strip(traveler_frames,key,row,10 if key=="death" else 18,false)
+		row+=1
+	# Hold the drawn bow until the player releases the attack.
+	add_strip(traveler_frames,"charge",12+ACTION_ROWS.find("bow"),7,false,3)
+
+func pose(state:String):
+	if traveler_frames==null:build_traveler_frames()
+	if sprite.sprite_frames!=traveler_frames:
+		sprite.sprite_frames=traveler_frames
+		sprite.position=Vector2(0,-17)
+	var key=state
+	sprite.flip_h=false
+	if state in MOVING_STATES:
+		var direction="north" if facing.y<0 else "south"
+		if absf(facing.x)>absf(facing.y):direction="west" if facing.x<0 else "east"
+		key=state+"_"+direction
+	else:
+		sprite.flip_h=facing.x<0
+		if state=="attack":key="bow" if Saga.data.style==1 else "sweep" if combo==3 else "blade"
+		if state=="cast":key="ice" if Saga.data.chapter>=4 else "fire"
+	if sprite.animation!=key:sprite.play(key)
 
 func _physics_process(dt):
 	if not is_instance_valid(game) or game.is_locked():
@@ -70,7 +117,7 @@ func _physics_process(dt):
 	var running=Input.is_key_pressed(KEY_SHIFT) or (is_instance_valid(game.ui.touch_controls) and game.ui.touch_controls.running)
 	velocity=target_dir*244 if dodge_time>0 else dir*speed*(1.42 if running else 1.0)*(.42 if guard or charging else 1.0)
 	move_and_slide()
-	pose("dodge" if dodge_time>0 else action if action_time>0 else "cast" if charging else ("run" if running else "walk") if dir!=Vector2.ZERO else "idle")
+	pose("dodge" if dodge_time>0 else action if action_time>0 else "charge" if charging else "guard" if guard else ("run" if running else "walk") if dir!=Vector2.ZERO else "idle")
 	sprite.modulate=Color(1,.65,.6) if invincible>.27 else Color.WHITE
 	Saga.data.hp=clampf(Saga.data.hp,0,Saga.max_hp())
 	Saga.data.mp=minf(Saga.max_mp(),Saga.data.mp+dt*(3 if Saga.data.chapter>=1 else 2))
@@ -126,7 +173,7 @@ func special():
 		return
 	Saga.data.mp-=15
 	spell_cd=2.4
-	act("cast",.3)
+	act("surge",.3)
 	game.sound("runa")
 	if Saga.data.style==2 and Saga.data.magic=="cura" and (Saga.has_skill(4) or Saga.data.chapter>=5):
 		Saga.data.hp=minf(Saga.max_hp(),Saga.data.hp+22)

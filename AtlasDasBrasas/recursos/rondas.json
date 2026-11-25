@@ -1,0 +1,218 @@
+[
+  {
+    "title": "O barro da travessia",
+    "topic": "Higiene das mãos",
+    "place": "Posto da balsa",
+    "teach": "Antes de tocar em alguém para prestar cuidado, higienize as mãos. Quando há sujeira visível, use água e sabonete. As luvas também podem se contaminar.",
+    "scene": "A balsa chegou depois da cheia. Uma voluntária estende as mãos para ajudar na troca de um curativo.",
+    "points": [
+      [
+        "Mãos",
+        "Há barro visível nas mãos da voluntária."
+      ],
+      [
+        "Lavatório",
+        "A torneira funciona e há sabonete ao lado."
+      ],
+      [
+        "Caixa",
+        "A caixa contém luvas limpas."
+      ]
+    ],
+    "key": 0,
+    "actions": [
+      "Vestir as luvas",
+      "Lavar com água e sabonete",
+      "Usar só a preparação alcoólica"
+    ],
+    "answer": 1,
+    "feedback": [
+      "A luva pode se contaminar ao ser colocada com as mãos sujas.",
+      "A água e o sabonete removem a sujeira visível antes do cuidado.",
+      "A preparação alcoólica sozinha é inadequada quando há barro visível."
+    ],
+    "record": "A voluntária lavou e secou as mãos antes de retomar o cuidado. A equipe reabasteceu o lavatório.",
+    "source": "Anvisa · Higiene das mãos",
+    "url": "https://www.gov.br/anvisa/pt-br/centraisdeconteudo/publicacoes/servicosdesaude/manuais/seguranadopacientecaderno12higienedasmos.pdf"
+  },
+  {
+    "title": "Duas fichas de Lume",
+    "topic": "Identificação segura",
+    "place": "Pátio de acolhimento",
+    "teach": "Antes do cuidado, peça à própria pessoa que diga nome completo e data de nascimento. Compare ambos com a identificação e a ficha. Havendo divergência, interrompa e peça à equipe que confira.",
+    "scene": "Duas viajantes aguardam atendimento. A equipe convida uma delas para a mesa e pede seus dados em voz baixa.",
+    "points": [
+      [
+        "Assento",
+        "O banco mudou de lugar pela manhã."
+      ],
+      [
+        "Ficha",
+        "A ficha sobre a mesa traz o mesmo nome, mas outra data de nascimento."
+      ],
+      [
+        "Pulseira",
+        "A pulseira coincide com os dois dados que a viajante informou."
+      ]
+    ],
+    "key": 1,
+    "actions": [
+      "Usar o número do assento",
+      "Prosseguir pelo primeiro nome",
+      "Pausar e conferir a divergência"
+    ],
+    "answer": 2,
+    "feedback": [
+      "Um lugar pode ser trocado e não identifica uma pessoa.",
+      "Nomes podem coincidir. A data da ficha é diferente.",
+      "A equipe precisa resolver a divergência antes de prestar o cuidado."
+    ],
+    "record": "A equipe conferiu os dois identificadores em privacidade, separou as fichas e só então retomou o atendimento.",
+    "source": "Ministério da Saúde · Identificação do paciente",
+    "url": "https://www.gov.br/saude/pt-br/composicao/saes/seguranca-do-paciente/protocolos-de-seguranca-do-paciente"
+  },
+  {
+    "title": "Depois da cheia",
+    "topic": "Água segura",
+    "place": "Abrigo da cisterna",
+    "teach": "A água da enchente pode estar contaminada mesmo quando parece limpa. Para beber, escolha água de origem segura e guarde-a em recipiente higienizado, tampado e reservado para esse uso.",
+    "scene": "Na fila do abrigo, uma família pergunta de qual reservatório pode encher a sua jarra.",
+    "points": [
+      [
+        "Tonel",
+        "Uma marca de lama mostra que a cheia entrou neste tonel."
+      ],
+      [
+        "Caneca",
+        "A caneca comunitária ficou mergulhada na água da cheia."
+      ],
+      [
+        "Reserva",
+        "A reserva de água potável está identificada e tampada."
+      ]
+    ],
+    "key": 0,
+    "actions": [
+      "Isolar o tonel e usar a reserva",
+      "Servir a água que parece clara",
+      "Misturar as duas reservas"
+    ],
+    "answer": 0,
+    "feedback": [
+      "A reserva segura atende as famílias enquanto a equipe avalia o tonel atingido.",
+      "A aparência da água não permite confirmar sua segurança.",
+      "A mistura colocaria em risco também a água potável."
+    ],
+    "record": "O abrigo identificou o tonel atingido e passou a distribuir a água da reserva potável.",
+    "source": "Ministério da Saúde · Cuidados com a água",
+    "url": "https://www.gov.br/saude/pt-br/assuntos/saude-de-a-a-z/e/enchentes/cuidados-com-a-agua"
+  },
+  {
+    "title": "A passagem de Amaro",
+    "topic": "Prevenção de quedas",
+    "place": "Pousada da serra",
+    "teach": "Observe o caminho junto com a pessoa. Remova obstáculos, mantenha o piso seco e os objetos de uso ao alcance. Pergunte que apoio ela prefere ao se deslocar.",
+    "scene": "Amaro quer ir até a janela ver a neve. Antes de levantar, pede que você examine o caminho junto com ele.",
+    "points": [
+      [
+        "Janela",
+        "A luz da janela ilumina o corredor."
+      ],
+      [
+        "Banco",
+        "Amaro aguarda sentado e pode dizer de que apoio precisa."
+      ],
+      [
+        "Tapete",
+        "A ponta do tapete está solta bem onde Amaro pisaria."
+      ]
+    ],
+    "key": 2,
+    "actions": [
+      "Pedir que pule a dobra",
+      "Liberar a passagem e oferecer apoio",
+      "Apagar a luz da passagem"
+    ],
+    "answer": 1,
+    "feedback": [
+      "Pular a dobra aumenta a chance de perder o equilíbrio.",
+      "Remover o obstáculo e combinar o apoio preserva a segurança e a autonomia.",
+      "Uma passagem mal iluminada dificulta perceber obstáculos."
+    ],
+    "record": "A equipe retirou o tapete solto. Amaro escolheu como queria ser acompanhado até a janela.",
+    "source": "Ministério da Saúde · Prevenção de quedas",
+    "url": "https://www.gov.br/saude/pt-br/composicao/saes/seguranca-do-paciente/protocolos-de-seguranca-do-paciente"
+  },
+  {
+    "title": "O pátio depois da chuva",
+    "topic": "Prevenção de arboviroses",
+    "place": "Viveiro das águas",
+    "teach": "O Aedes pode usar pequenos recipientes com água parada. Esvazie e escove as paredes internas, guarde recipientes secos e proteja reservatórios. Combine uma inspeção semanal.",
+    "scene": "A jardineira já guardou as ferramentas depois da chuva. Vocês examinam o que ficou no pátio.",
+    "points": [
+      [
+        "Canteiro",
+        "A terra está úmida e não há poças no canteiro."
+      ],
+      [
+        "Balde",
+        "Há água parada no balde esquecido atrás dos vasos."
+      ],
+      [
+        "Caixa",
+        "A tampa do reservatório está inteira e bem ajustada."
+      ]
+    ],
+    "key": 1,
+    "actions": [
+      "Abrir o reservatório",
+      "Inspecionar só quando fizer calor",
+      "Esvaziar, escovar e guardar o balde"
+    ],
+    "answer": 2,
+    "feedback": [
+      "Abrir a caixa cria outro local acessível ao mosquito.",
+      "O balde já contém água. A vistoria precisa ser regular.",
+      "A escovação ajuda a remover ovos aderidos. Guardar o balde seco evita novo acúmulo."
+    ],
+    "record": "A jardineira guardou o balde virado e anotou a próxima vistoria para dali a uma semana.",
+    "source": "Ministério da Saúde · Eliminação de focos",
+    "url": "https://www.gov.br/saude/pt-br/assuntos/noticias/2025/novembro/dez-dicas-para-eliminar-focos-do-mosquito-da-dengue/"
+  },
+  {
+    "title": "O chamado da forja",
+    "topic": "Comunicação de urgência",
+    "place": "Posto da forja",
+    "teach": "Falta de ar intensa e súbita exige ajuda imediata. De um local seguro, acione o serviço de urgência, diga onde a pessoa está e descreva o que observa. No Brasil, ligue para o SAMU 192 e siga as orientações.",
+    "scene": "No posto, uma artesã começou a sentir intensa falta de ar. O local é seguro e há um comunicador ao seu alcance.",
+    "points": [
+      [
+        "Artesã",
+        "A artesã está consciente, com falta de ar intensa e dificuldade para falar."
+      ],
+      [
+        "Entrada",
+        "A equipe pode entrar pela porta sul identificada como Posto da forja."
+      ],
+      [
+        "Comunicador",
+        "O comunicador alcança a central de urgência."
+      ]
+    ],
+    "key": 0,
+    "actions": [
+      "Chamar a urgência agora",
+      "Aguardar o fim do turno",
+      "Oferecer uma poção da mochila"
+    ],
+    "answer": 0,
+    "feedback": [
+      "Informe o local e a dificuldade respiratória. A central orienta os próximos passos.",
+      "Esperar pode atrasar o socorro em uma emergência.",
+      "A prioridade é chamar ajuda qualificada imediatamente."
+    ],
+    "record": "A central recebeu o local e a descrição da falta de ar. A equipe seguiu suas orientações até a chegada do socorro.",
+    "source": "Ministério da Saúde · SAMU 192",
+    "url": "https://www.gov.br/saude/pt-br/composicao/saes/samu-192/"
+  }
+]

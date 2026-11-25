@@ -12,6 +12,7 @@ const SKILLS = ["Passo leve","Lâmina dupla","Olho de falcão","Égide de vidro"
 const COSTS = [1,2,1,1,2,2]
 const PARENTS = [-1,0,-1,-1,3,3]
 var regions: Array
+var rounds: Array
 var lessons: Array
 var data: Dictionary
 var settings := ConfigFile.new()
@@ -20,6 +21,7 @@ var aliases = {"up":KEY_UP,"down":KEY_DOWN,"left":KEY_LEFT,"right":KEY_RIGHT}
 
 func _ready():
 	regions = JSON.parse_string(FileAccess.get_file_as_string("res://recursos/regioes.json"))
+	rounds = JSON.parse_string(FileAccess.get_file_as_string("res://recursos/rondas.json"))
 	lessons = JSON.parse_string(FileAccess.get_file_as_string("res://recursos/licoes.json"))
 	settings.load(SETTINGS)
 	for action in binds:
@@ -46,7 +48,7 @@ func apply_audio():
 	AudioServer.set_bus_volume_db(0,linear_to_db(maxf(v,0.0001)))
 
 func reset():
-	data={"chapter":0,"stage":0,"briefed":false,"taught":-1,"xp":0,"hp":100.0,"mp":60.0,"style":0,"weapon":0,"armor":false,"magic":"lume","charm":"","points":1,"learned":[],"review":{},"choices":{},"bonds":{},"seen":[0],"side":{},"chests":[],"herbs":2,"ore":2,"potions":2,"skills":[],"weapons":[0],"letter":"","won":false,"pos":[324,265],"room":"hall","ruins":{},"relics":[],"inside":false,"interior":0,"kills":[],"saved_at":""}
+	data={"chapter":0,"stage":0,"briefed":false,"taught":-1,"xp":0,"hp":100.0,"mp":60.0,"style":0,"weapon":0,"armor":false,"magic":"lume","charm":"","points":1,"learned":[],"review":{},"choices":{},"bonds":{},"seen":[0],"side":{},"chests":[],"herbs":2,"ore":2,"potions":2,"skills":[],"weapons":[0],"letter":"","won":false,"pos":[324,265],"room":"hall","ruins":{},"relics":[],"inside":false,"interior":0,"kills":[],"saved_at":"","care_records":{},"care_route":-1}
 
 func level() -> int: return 1 + int(float(data.xp)/100)
 func max_hp() -> float: return 94.0 + level()*6.0 + (18 if data.armor else 0)

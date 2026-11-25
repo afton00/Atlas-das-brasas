@@ -108,6 +108,47 @@ func check_guidance():
 	check(not Input.is_action_pressed("right"),"Painel oculto solta direcional")
 	controls.queue_free()
 
+func check_care_rounds():
+	g.ui.journal()
+	click("Caderno de rondas")
+	check(g.ui.mode=="care_index","Caderno acessível pelo diário")
+	for c in Saga.rounds.size():
+		var entry=Saga.rounds[c]
+		g.ui.care_brief(c)
+		click("Marcar rota")
+		var target=Saga.origin(c)+g.world.CARE_POINTS[c]
+		check(g.route_target()==target,"Orientação até "+entry.place)
+		g.world.trail.follow(g.hero.position,target)
+		check(g.world.trail.available,"Rota acessível a "+entry.place)
+		walk_to(target+Vector2(0,7))
+		g.interact()
+		click("Examinar o posto")
+		check(g.ui.mode=="care_field","Inspeção de "+entry.place)
+		if c==5:
+			click("Acionar a equipe")
+		else:
+			click(entry.points[(int(entry.key)+1)%3][0])
+			check(not int(entry.key) in g.ui.care_observed,"Exploração livre antes da pista")
+			click(entry.points[int(entry.key)][0])
+			click("Escolher um cuidado")
+		var xp=Saga.data.xp
+		click(entry.actions[(int(entry.answer)+1)%3])
+		check(g.ui.mode=="care_decision" and Saga.data.xp==xp,"Feedback e nova tentativa")
+		click(entry.actions[int(entry.answer)])
+		check(g.ui.mode=="care_record" and Saga.data.xp==xp+25 and int(Saga.data.care_route)==-1,"Registro e recompensa de "+entry.place)
+		click("Retomar a viagem")
+		g.interact()
+		click("Refazer a ronda")
+		click(entry.points[int(entry.key)][0])
+		click("Acionar a equipe" if c==5 else "Escolher um cuidado")
+		click(entry.actions[int(entry.answer)])
+		check(Saga.data.xp==xp+25,"Revisão sem duplicar a recompensa")
+		click("Retomar a viagem")
+	check(Saga.restore() and Saga.data.care_records.size()==6,"Seis registros persistentes")
+	g.build(true,0,Vector2(365,209))
+	g.interact()
+	check(g.ui.mode=="care_index","Conversa com Lia na oficina de Junco")
+
 func run():
 	await get_tree().process_frame
 	check(g.ui.mode=="menu","Menu inicial")
@@ -257,6 +298,7 @@ func run():
 	g.continue_game()
 	check(Saga.data.won and Saga.data.chapter==6 and Saga.data.learned.size()==29 and Saga.has_skill(0),"Carregar campanha concluída")
 	check(Saga.data.letter!="","Texto autoral persistido")
+	check_care_rounds()
 	print("ATLAS: %d verificações; %d falhas."%[checks,failures.size()])
 	get_tree().quit(0 if failures.is_empty() else 1)
 

@@ -41,6 +41,12 @@ permite repetir a tentativa. A enciclopédia conserva os ensinamentos e permite
 refazer as atividades. A carta escrita em Lume e as relações com os mestres
 ficam na seção Relações e cartas. A escrita usa autorrevisão por três critérios.
 
+Rondas de enfermagem
+Na oficina do Junco, converse com Lia. Também é possível abrir o Caderno de
+rondas pelo diário. Marque um posto, siga a trilha e examine o cenário.
+Cada ronda tem orientação, pistas, decisão, devolutiva e passagem de plantão.
+As seis fontes oficiais podem ser consultadas nos registros finais.
+
 Salvamento
 A jornada é salva automaticamente e pelo menu de pausa. O arquivo atlas_v1.json
 e a cópia anterior ficam na pasta de dados do usuário do Godot para este jogo.
@@ -64,7 +70,8 @@ Na pasta deste projeto com o Godot disponível como godot:
 O teste interrompe a execução se encontrar uma jornada gravada na área de dados.
 
 Créditos
-Ilustrações, retratos e bases dos sprites foram produzidos com o gerador de
+As onze pranchas do Atlas.zip fornecido foram adaptadas para uso em jogo.
+As ilustrações e bases de sprites da edição anterior foram produzidas com o gerador de
 imagens do GPT. Os quadros, terrenos, mapa, composição musical e efeitos
 foram preparados para este projeto. As fontes Liberation acompanham sua
 licença em interfaces/LICENCA-fontes.txt.

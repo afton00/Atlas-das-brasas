@@ -7,6 +7,20 @@ const HOME=Vector2(327,226)
 const CACHE=Vector2(135,128)
 const CRYPT=Vector2(85,448)
 const ARCH=Vector2(661,109)
+const CARE_POINTS=[Vector2(385,224),Vector2(575,195),Vector2(188,327),Vector2(635,328),Vector2(216,115),Vector2(695,200)]
+const CARE_LABELS=["Posto da balsa","Pátio de acolhimento","Abrigo da cisterna","Pousada da serra","Viveiro das águas","Posto da forja"]
+const CARE_ART=["venda","academia","poco","pousada","boticario","provisoes"]
+const WORKSHOPS=["oficina","biblioteca","fortaleza","torre","jardim","forja"]
+const VILLAGES=["casa-junco","casa-lume","casa-ocre","casa-serra","casa-mata","casa-basalto"]
+const TRADES=["moinho","livraria","vigia","serraria","fazenda","mineiro"]
+const REGIONAL_FLORA=[
+	["green","willow","flowers","green","gold"],
+	["pink","violet","flowers","pink","gold"],
+	["rock","stub","gold","stones","rock"],
+	["pine","stones","pine","crystals","rock"],
+	["willow","wisdom","fungus","green","plant"],
+	["hazel","stones","crystals","stub","rock"]
+]
 var trail
 var terrain:TileMapLayer
 var objects:Node2D
@@ -76,28 +90,22 @@ func rebuild(inside:bool,r:int,room:String="hall"):
 	refresh()
 	queue_redraw()
 
-func prop(pos:Vector2,idx:int,tag="",title="",solid=true,shadow=13.0):
+func place(pos:Vector2,texture:Texture2D,tag="",title="",solid=true,shadow=13.0):
 	var n=Lugar.new()
 	n.position=pos
-	n.setup(tag,title,load("res://mapas/p%d.png"%idx),solid,shadow)
+	n.setup(tag,title,texture,solid,shadow)
 	objects.add_child(n)
 	if tag!="":sites.append(n)
 	return n
 
-func sprite_prop(pos:Vector2,idx:int,tag="",title="",solid=true,shadow=13.0):
-	var n=Lugar.new()
-	n.position=pos
-	n.setup(tag,title,load("res://personagens/s%d.png"%idx),solid,shadow)
-	objects.add_child(n)
-	if tag!="":sites.append(n)
-	return n
+func prop(pos:Vector2,idx:int,tag="",title="",solid=true,shadow=13.0):
+	return place(pos,load("res://mapas/p%d.png"%idx),tag,title,solid,shadow)
+
+func margem(pos:Vector2,art:String,tag="",title="",solid=true,shadow=13.0):
+	return place(pos,load("res://mapas/margens/%s.png"%art),tag,title,solid,shadow)
 
 func detail(pos:Vector2,idx:int,blocks:bool=false,radius:float=7):
-	var n=Lugar.new()
-	n.position=pos
-	n.setup("","",load("res://mapas/biomas/%02d.png"%idx),blocks,radius)
-	objects.add_child(n)
-	return n
+	return place(pos,load("res://mapas/biomas/%02d.png"%idx),"","",blocks,radius)
 
 func obstacle(rect:Rect2):
 	var body=StaticBody2D.new()
@@ -139,7 +147,7 @@ func build_region(c:int):
 			var tile=[9,8,10][x]
 			if y in [8,9,23,24]:tile=12 if y in [9,23] else 11
 			terrain.set_cell(Vector2i(base/16)+Vector2i(channel+x,y),0,Vector2i(tile,c))
-	var reserved=[HOME,CACHE,ARCH,CRYPT,Vector2(382,172),Vector2(207,215),Vector2(500,158),Vector2(238,151),Vector2(435,330),Vector2(543,300),Vector2(120,342)]
+	var reserved=[CARE_POINTS[c],HOME,CACHE,ARCH,CRYPT,Vector2(382,172),Vector2(207,215),Vector2(568,105),Vector2(238,151),Vector2(435,330),Vector2(543,300),Vector2(120,342)]
 	reserved.append_array(POINTS)
 	var planted:Array=[]
 	for i in 185:
@@ -149,9 +157,10 @@ func build_region(c:int):
 		if reserved.any(func(v):return p.distance_to(v)<48):continue
 		if planted.any(func(v):return p.distance_to(v)<24):continue
 		planted.append(p)
-		var palettes=[[9,11,0,9,7],[11,9,8,6,11],[4,5,5,4,5],[6,7,6,7,6],[9,8,9,8,8],[10,7,11,10,10]]
-		var idx=int(palettes[c][i%5])
-		detail(base+p,idx,idx not in [0,8],9 if idx in [4,6,9,11] else 7)
+		var foliage=REGIONAL_FLORA[c][i%5]
+		var canopy=foliage in ["green","willow","gold","pink","violet","pine","wisdom","hazel"]
+		margem(base+p,foliage,"","",canopy or foliage in ["rock","stones"],9 if canopy else 6)
+
 	# Village furniture gives the entrances and river crossings distinct silhouettes.
 	for spot in [HOME+Vector2(-29,2),POINTS[1]+Vector2(20,-5),CRYPT+Vector2(22,-5)]:
 		detail(base+spot,2)
@@ -164,10 +173,11 @@ func build_region(c:int):
 		if terrain.get_cell_atlas_coords(cell).x in [0,1,2,3]:
 			if c in [0,1,4]:detail(base+spot,0 if k%3!=0 else 8)
 
-	if c==0:sprite_prop(base+HOME,14,"door",d.building,true,24)
-	else:prop(base+HOME,[0,0,1,2,3,4][c],"door",d.building,true,23)
-	sprite_prop(base+Vector2(238,151),14,"","",true,22)
-	prop(base+Vector2(500,158),[12,0,1,2,3,4][c],"","",true,22)
+	margem(base+HOME,WORKSHOPS[c],"door",d.building,true,23)
+	margem(base+Vector2(238,151),VILLAGES[c],"","",true,18)
+	margem(base+Vector2(568,105),TRADES[c],"","",true,18)
+	margem(base+CARE_POINTS[c],CARE_ART[c],"care",CARE_LABELS[c],true,15)
+
 	prop(base+Vector2(435,330),[8,12,8,7,13,8][c],"","",true,10)
 	for i in 3:prop(base+POINTS[i],[[9,5,11],[10,5,10],[10,5,8],[11,7,11],[13,14,13],[9,5,11]][c][i],"site"+str(i),d["site"+str(i)],true,12)
 	prop(base+CACHE,15,"cache","Abrigo do recanto",false,9)
@@ -205,6 +215,8 @@ func build_room(c:int):
 		m.setup(c,Vector2(257,144),game.is_locked)
 		objects.add_child(m)
 		mentors.append(m)
+		if c==0:
+			place(Vector2(365,205),load("res://personagens/enfermeira_campo.png"),"nurse","Enfermeira Lia",false,8)
 	else:prop(Vector2(256,78),6,"altar","Pedra das seis margens",true,20)
 	prop(Vector2(256,294),5,"exit","Voltar à estrada",false,12)
 

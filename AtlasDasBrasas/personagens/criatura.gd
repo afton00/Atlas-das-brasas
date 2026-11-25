@@ -1,5 +1,17 @@
 extends "res://scripts/ator.gd"
 
+const BEAST_PATH="res://personagens/bestiario/"
+const REGIONAL_BEASTS=[
+	["cogumelo","lobo","arqueiro"], ["rato","morcego","bruxa"],
+	["javali","serpente","cristal"], ["aranha","corvo","espectro"],
+	["trepadeira","lobo","fagulha"], ["vigia","cavaleiro","cultista"]]
+const CRYPT_BEASTS=["vigia","bruxa","pedra","espectro","ent","lava"]
+const GUARDIANS=["lobo","vazio","colosso","abissal","raiz","lava","dragao"]
+const GUARDIAN_NAMES=["Lobo do Junco","Arauto de Lume","Colosso de Ocre","Cavaleiro da Agulha","Ent da Nascente","Elemental de Basalto","Aster"]
+static var beast_frames:Dictionary={}
+var species:String
+var skin_scale=1.0
+var skin_height=0.0
 var game
 var home:Vector2
 var kind=0
@@ -29,9 +41,63 @@ func setup(g,k,c,pos:Vector2,is_boss:bool,id:String):
 	hp_max=(155 if k==3 else 40+c*10 if is_boss else 17+c*4)
 	hp=hp_max
 	shadow_size=[7,8,10,23][k]
+	species=pick_species()
+	if boss and tier in [0,5]:skin_scale=1.35
 	make_actor(10+k,shadow_size*.65)
 	collision_layer=4
 	timer=.45+fmod(pos.x,.6)
+
+func pick_species()->String:
+	if boss:return GUARDIANS[tier]
+	if quest_id=="treino":return "pedra"
+	if quest_id.begins_with("cripta"):return CRYPT_BEASTS[tier]
+	if tier==0 and quest_id.ends_with("_2"):return "lodo"
+	if quest_id.begins_with("side"):return "cavaleiro" if tier==2 else "cristal"
+	return REGIONAL_BEASTS[tier][kind]
+
+func bestiary_name()->String:
+	return GUARDIAN_NAMES[tier]
+
+func portrait()->Texture2D:
+	return load(BEAST_PATH+"g%d.png"%tier)
+
+func pose(state:String):
+	if not beast_frames.has(species):
+		var texture=load(BEAST_PATH+species+".png")
+		var frames=SpriteFrames.new()
+		frames.add_frame("default",texture)
+		beast_frames[species]=frames
+	if sprite.sprite_frames!=beast_frames[species]:
+		sprite.sprite_frames=beast_frames[species]
+		skin_height=sprite.sprite_frames.get_frame_texture("default",0).get_height()
+	var planted=0.0
+	var stretch=Vector2.ONE
+	var tilt=0.0
+	match state:
+		"idle":
+			stretch.y+=sin(age*3.2)*.015
+		"walk":
+			var stride=sin(age*(10.5 if kind==1 else 8.0))
+			planted=-absf(stride)*1.6
+			tilt=stride*.038
+		"cast":
+			stretch=Vector2(1.05,.94)
+			tilt=-.035
+		"attack":
+			stretch=Vector2(.96,1.06)
+			tilt=.07
+		"hurt":
+			tilt=-.075
+		"death":
+			var fall=create_tween().set_parallel()
+			fall.tween_property(sprite,"rotation",.27 if facing.x>0 else -.27,.22)
+			fall.tween_property(sprite,"modulate:a",.35,.32)
+			return
+	var leftward_asset=species in ["serpente","corvo"]
+	sprite.flip_h=(facing.x>0) if leftward_asset else (facing.x<0)
+	sprite.rotation=-tilt if facing.x<0 else tilt
+	sprite.scale=stretch*skin_scale
+	sprite.position.y=roundf(2+planted-skin_height*sprite.scale.y*.5)
 
 func shielded():return kind==3 and fmod(dragon_clock,8.0)<4.8
 func hit(amount:int):
