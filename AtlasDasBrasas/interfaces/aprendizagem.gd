@@ -34,7 +34,8 @@ func practice():
 				var idx=i
 				button(view,study.opts[i],108,220+51*i,744,43,func():evaluate(idx))
 		"dial":
-			number=label(view,str(dial),340,223,280,77,53,GOLD,true,HORIZONTAL_ALIGNMENT_CENTER)
+			box(view,186,214,588,171,PANEL,LINE)
+			number=label(view,str(dial),340,217,280,77,53,GOLD,true,HORIZONTAL_ALIGNMENT_CENTER)
 			button(view,"−",290,242,53,44,func():adjust(-1))
 			button(view,"+",617,242,53,44,func():adjust(1))
 			var s=HSlider.new()
@@ -44,7 +45,15 @@ func practice():
 			s.value=dial
 			s.step=1
 			view.add_child(s)
-			rect(s,266,317,428,30)
+			rect(s,258,303,444,24)
+			var scale_marks=preload("res://interfaces/medida.gd").new()
+			scale_marks.minimum=int(study.opts[0])
+			scale_marks.maximum=int(study.opts[1])
+			scale_marks.value=dial
+			view.add_child(scale_marks)
+			rect(scale_marks,250,333,460,38)
+			scale_marks.selected.connect(func(n):s.value=n)
+			s.value_changed.connect(func(v):scale_marks.value=int(v);scale_marks.queue_redraw())
 			s.value_changed.connect(func(v):dial=int(v);number.text=str(dial))
 			button(view,"Aplicar medida",605,449,246,38,func():evaluate(dial),true)
 		"order":
@@ -54,6 +63,7 @@ func practice():
 				var idx=indices[i]
 				var b=button(view,study.opts[idx],108,218+i*48,505,40,func():add_step(idx))
 				seq_buttons.append(b)
+			box(view,627,217,224,138,PANEL,LINE)
 			status_label=label(view,"Sequência\n—",636,219,218,130,17,GOLD)
 			button(view,"Recomeçar",605,449,246,38,func():steps=[];practice())
 		"grid":
@@ -144,6 +154,10 @@ func evaluate(val):
 			note=study.hints
 		_:note=study.hints
 	response.text=note
+	response.add_theme_color_override("font_color",Color("#f8bda0"))
+	if not Saga.settings.get_value("game","still",false):
+		response.modulate.a=.45
+		response.create_tween().tween_property(response,"modulate:a",1.0,.18)
 
 func complete_practice():
 	var c=int(study.ch)

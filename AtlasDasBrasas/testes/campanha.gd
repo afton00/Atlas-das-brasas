@@ -76,6 +76,38 @@ func check_crypt():
 	g.interact()
 	check(not g.world.interior and g.hero.position.distance_to(g.world.CRYPT)<27,"Retorno pela saída do templo")
 
+func check_guidance():
+	var trail=g.world.trail
+	trail.follow(Vector2(440,264),Vector2(596,264))
+	check(trail.available,"Rota até a margem oposta")
+	var crossing=false
+	var clear_route=true
+	for cell in trail.steps:
+		var tile=g.world.terrain.get_cell_atlas_coords(cell)
+		if tile.x in [11,12] and cell.y in [8,9,23,24]:crossing=true
+		if tile.x in [8,9,10,16]:clear_route=false
+	check(crossing and clear_route,"Trilha usa uma ponte transitável")
+	var controls=preload("res://interfaces/toque.gd").new()
+	controls.game=g
+	g.ui.hud.add_child(controls)
+	var finger=InputEventScreenTouch.new()
+	finger.index=0
+	finger.position=controls.STICK+Vector2(41,0)
+	finger.pressed=true
+	controls._input(finger)
+	var attack=InputEventScreenTouch.new()
+	attack.index=1
+	attack.pressed=true
+	attack.position=Vector2(797,480)
+	controls._input(attack)
+	check(Input.is_action_pressed("right") and Input.is_action_pressed("attack"),"Movimento e ataque com dois dedos")
+	attack.pressed=false
+	controls._input(attack)
+	check(Input.is_action_pressed("right") and not Input.is_action_pressed("attack"),"Soltar ataque conserva o direcional")
+	controls.hide()
+	check(not Input.is_action_pressed("right"),"Painel oculto solta direcional")
+	controls.queue_free()
+
 func run():
 	await get_tree().process_frame
 	check(g.ui.mode=="menu","Menu inicial")
@@ -83,6 +115,7 @@ func run():
 	click("Descer até a margem")
 	click("Voltar à aventura")
 	check(g.enemies.size()==20,"População regional")
+	check_guidance()
 	var start=g.hero.position
 	Input.action_press("right")
 	for i in 12:await get_tree().physics_frame

@@ -1,7 +1,12 @@
 extends "res://interfaces/aprendizagem.gd"
 
+const STANCE_ICONS=[preload("res://interfaces/icones/lamina.png"),preload("res://interfaces/icones/arco.png"),preload("res://interfaces/icones/magia.png")]
 const Map=preload("res://interfaces/cartografia.gd")
 const Mentor=preload("res://personagens/mentor.gd")
+var xpbar:ColorRect
+var level_label:Label
+var prompt_panel:Panel
+var stance:TextureRect
 var hpbar:ColorRect
 var mpbar:ColorRect
 var hplabel:Label
@@ -22,31 +27,43 @@ var boss_label:Label
 
 func update_hud():
 	clear(hud)
-	box(hud,18,15,209,67,Color("#12282bea"),LINE)
-	tex(hud,"res://personagens/s0.png",26,24,40,49)
-	label(hud,"NV. %02d"%Saga.level(),72,18,65,22,13,GOLD)
-	style_label=label(hud,"",126,18,95,22,13,MUTED,false,HORIZONTAL_ALIGNMENT_RIGHT)
-	line(hud,72,45,91,6,Color("#374844"))
-	line(hud,72,61,91,6,Color("#374844"))
-	hpbar=line(hud,72,45,91,6,Color("#df8c70"))
-	mpbar=line(hud,72,61,91,6,Color("#81c4be"))
-	hplabel=label(hud,"",164,35,53,23,11,PALE,false,HORIZONTAL_ALIGNMENT_RIGHT)
-	mplabel=label(hud,"",164,52,53,23,11,PALE,false,HORIZONTAL_ALIGNMENT_RIGHT)
-	box(hud,655,15,287,73,Color("#12282bea"),LINE)
-	region_label=label(hud,"",666,18,263,23,13,GOLD)
-	objective_label=label(hud,"",666,40,263,43,14,PALE)
+	box(hud,15,13,224,77,Color("#131e2bed"),LINE)
+	tex(hud,"res://personagens/s0.png",24,24,38,50)
+	level_label=label(hud,"",71,16,68,22,14,GOLD)
+	stance=glyph(hud,"lamina",133,17,17)
+	style_label=label(hud,"",153,15,78,22,14,PALE)
+	glyph(hud,"vida",70,41,13)
+	glyph(hud,"mana",70,59,13)
+	line(hud,88,45,91,6,Color("#41434b"))
+	line(hud,88,63,91,6,Color("#314650"))
+	hpbar=line(hud,88,45,91,6,Color("#dc8975"))
+	mpbar=line(hud,88,63,91,6,Color("#81cabb"))
+	hplabel=label(hud,"",181,36,51,21,12,PALE,false,HORIZONTAL_ALIGNMENT_RIGHT)
+	mplabel=label(hud,"",181,54,51,21,12,PALE,false,HORIZONTAL_ALIGNMENT_RIGHT)
+	xpbar=line(hud,22,84,1,2,GOLD)
+	box(hud,649,13,296,97,Color("#141e2bee"),LINE)
+	glyph(hud,"rumo",660,23,23)
+	region_label=label(hud,"",690,21,246,24,15,GOLD,true)
+	line(hud,663,51,268,1,LINE)
+	objective_label=label(hud,"",663,55,267,51,15,PALE)
 	var touch=DisplayServer.is_touchscreen_available() or OS.has_feature("web_android") or OS.has_feature("web_ios")
 	if not touch:
-		box(hud,18,489,326,34,Color("#12282bea"),LINE)
-		label(hud,"%s  Diário      %s  Mapa      %s  Mochila      Esc  Pausa"%[Saga.keyname("journal"),Saga.keyname("map"),Saga.keyname("bag")],27,491,310,28,13,MUTED)
-	prompt=label(hud,"",300,445,360,32,17,PALE,true,HORIZONTAL_ALIGNMENT_CENTER)
-	prompt.add_theme_constant_override("outline_size",6)
-	prompt.add_theme_color_override("font_outline_color",INK)
-	boss_label=label(hud,"",305,12,350,56,18,GOLD,true,HORIZONTAL_ALIGNMENT_CENTER)
+		var actions=[["Diário","diario",journal],["Mapa","mapa",open_map],["Mochila","mochila",bag],["Pausa","pausa",pause_page]]
+		for i in actions.size():
+			var entry=actions[i]
+			var b=button(hud,entry[0],15+i*101,486,94,38,entry[2])
+			button_icon(b,entry[1])
+			b.add_theme_font_size_override("font_size",14)
+			b.focus_mode=Control.FOCUS_NONE
+	prompt_panel=box(hud,300,424,360,39,Color("#121c2beb"),LINE)
+	prompt=label(hud,"",304,426,352,34,17,PALE,true,HORIZONTAL_ALIGNMENT_CENTER)
+	boss_label=label(hud,"",251,100 if touch else 15,386,53,18,GOLD,true,HORIZONTAL_ALIGNMENT_CENTER)
 	boss_label.add_theme_constant_override("outline_size",5)
 	boss_label.add_theme_color_override("font_outline_color",INK)
-	box(hud,336 if touch else 641,489,290 if touch else 301,34,Color("#12282bea"),LINE)
-	bearing=label(hud,"",342 if touch else 652,490,279,30,14,GOLD,false,HORIZONTAL_ALIGNMENT_RIGHT)
+	var bx=336 if touch else 611
+	box(hud,bx,486,287 if touch else 334,38,Color("#14202ce8"),LINE)
+	glyph(hud,"rumo",bx+10,494,22)
+	bearing=label(hud,"",bx+40,489,239 if touch else 282,32,15,GOLD)
 	if touch:
 		touch_controls=preload("res://interfaces/toque.gd").new()
 		touch_controls.game=game
@@ -70,12 +87,24 @@ func hud_tick():
 	var c=game.region()
 	region_label.text=("Caldeira de Aster" if c==6 else Saga.regions[c].place).to_upper()
 	objective_label.text="Siga a inscrição e abra o relicário." if game.world.room_type=="crypt" else Saga.objective()
-	var delta=game.route_target()-game.hero.position
-	var dir_names=["L","SE","S","SO","O","NO","N","NE"]
-	bearing.text=("Objetivo próximo" if delta.length()<32 else "Objetivo    %s    ·    %d passos"%[dir_names[posmod(roundi(delta.angle()/(PI/4)),8)],ceili(delta.length()/8)])
+	level_label.text="Nível %d"%Saga.level()
+	xpbar.size.x=(int(Saga.data.xp)%100)*2.1
+	stance.texture=STANCE_ICONS[int(Saga.data.style)]
+	var destination=game.route_target()
+	var trail=game.world.trail
+	trail.follow(game.hero.position,destination)
+	var delta=trail.next_point-game.hero.position
+	var directions=["Leste","Sudeste","Sul","Sudoeste","Oeste","Noroeste","Norte","Nordeste"]
+	if Saga.data.won and not game.world.interior:
+		bearing.text="Exploração livre"
+		trail.visible=false
+	elif game.hero.position.distance_to(destination)<32:bearing.text="Você chegou ao objetivo"
+	elif trail.available:bearing.text="%s   ·   %d passos pela trilha"%[directions[posmod(roundi(delta.angle()/(PI/4)),8)],ceili(trail.remaining/8)]
+	else:bearing.text="Consulte o mapa do reino"
 	if game.world.room_type=="crypt":region_label.text="TEMPLO DO RIO ANTIGO"
 	var n=game.world.nearest(game.hero.position)
 	prompt.text=""
+	prompt_panel.visible=n!=null
 	if n:
 		var s=(Saga.regions[n.c].resident if n.resident else Saga.regions[n.c].name) if n is Mentor else n.label
 		prompt.text=("Interagir · "+s) if is_instance_valid(touch_controls) else "[%s]  %s"%[Saga.keyname("use"),s]
@@ -100,12 +129,25 @@ func pause_page():
 	button(view,"Salvar e voltar ao título",482,357,367,48,game.return_title)
 	focus_default()
 
+func open_map():
+	map_selection=mini(game.region(),5)
+	map_page()
+
 func tutorial():
 	panel_page("help","Guia do viajante","Primeiros passos")
-	var t="Caminhe com as setas ou %s, %s, %s e %s. Segure Shift para correr. O losango dourado indica um local da missão. Aproxime-se e pressione %s.\n\n%s alterna lâmina, arco e magia. Use %s para atacar; com o arco, segure e solte para carregar. A mira acompanha o inimigo próximo. %s bloqueia na direção do olhar, %s esquiva e %s usa a técnica do estilo.\n\n%s abre o diário com instruções e habilidades. Os marcos permitem viajar para regiões visitadas. Uma queda leva você à vila, com as descobertas preservadas."%[Saga.keyname("up"),Saga.keyname("left"),Saga.keyname("down"),Saga.keyname("right"),Saga.keyname("use"),Saga.keyname("style"),Saga.keyname("attack"),Saga.keyname("guard"),Saga.keyname("dodge"),Saga.keyname("special"),Saga.keyname("journal")]
-	if DisplayServer.is_touchscreen_available() or OS.has_feature("web_android") or OS.has_feature("web_ios"):
-		t="Arraste o círculo à esquerda para caminhar. Empurre além da borda para correr. Aproxime-se do losango dourado e toque em Interagir."+char(10)+char(10)+"Use Estilo para alternar entre lâmina, arco e magia. Segure Atacar e solte para disparar o arco. Bloquear, Esquiva e Técnica ajudam a evitar os golpes dos guardiões."+char(10)+char(10)+"Abra Diário para consultar as missões ou Mochila para preparar e beber poções. Em uma aba anônima, o salvamento dura apenas enquanto a sessão privada estiver aberta."
-	label(view,t,108,149,742,267,18)
+	var touch=DisplayServer.is_touchscreen_available()
+	var cards=[
+		["rumo","Explorar","Arraste o direcional. Empurre até a borda para correr." if touch else "Caminhe com as setas ou as teclas de movimento. Segure Shift para correr."],
+		["diario","Descobrir","Siga a trilha dourada. Aproxime-se de Iria e toque em Interagir." if touch else "Siga a trilha dourada. Aproxime-se de Iria e pressione %s para conversar."%Saga.keyname("use")],
+		["lamina","Combater","Toque em Estilo para trocar de arma. Segure Atacar para carregar o arco." if touch else "%s troca o estilo de combate. Use %s para atacar e segure para carregar o arco."%[Saga.keyname("style"),Saga.keyname("attack")]]
+	]
+	for i in cards.size():
+		var x=108+i*251
+		box(view,x,166,238,212,PANEL,LINE)
+		glyph(view,cards[i][0],x+17,186,32)
+		label(view,cards[i][1],x+17,228,205,33,24,GOLD,true)
+		label(view,cards[i][2],x+17,271,203,89,17,PALE)
+	label(view,"O diário guarda as missões e os ensinamentos. A jornada é salva automaticamente.",109,386,740,51,16,MUTED)
 	footer()
 	focus_default()
 
@@ -113,18 +155,23 @@ func journal():
 	panel_page("journal","Caderno de viagem","Diário da expedição")
 	var c=mini(Saga.data.chapter,5)
 	var r=Saga.regions[c]
-	label(view,"CAMPANHA  /  "+("EPÍLOGO" if Saga.data.won else "CAPÍTULO %02d"%(c+1)),109,148,722,24,13,GOLD)
-	label(view,"O despertar de Aster" if Saga.data.chapter==6 else r.title,108,175,730,43,30,PALE,true)
-	label(view,Saga.objective(),108,225,733,55,19)
+	tex(view,"res://interfaces/cena_%d.png"%c,108,152,231,184,TextureRect.STRETCH_KEEP_ASPECT_COVERED)
+	gradient(view,108,246,231,90,PackedColorArray([Color("#111b2a00"),Color("#111b2ae6")]),true)
+	label(view,"EPÍLOGO" if Saga.data.won else "CAPÍTULO %02d"%(c+1),122,294,205,31,15,GOLD)
+	label(view,"O despertar de Aster" if Saga.data.chapter==6 else r.title,364,148,486,45,27,PALE,true)
+	label(view,Saga.objective(),364,196,477,65,18,PALE)
+	var count=Saga.chapter_lessons(c).size()
+	var done=count if Saga.data.chapter>c else int(Saga.data.stage)
+	label(view,"%d de %d descobertas"%[done,count],364,261,477,27,14,MUTED)
+	for i in count:line(view,364+i*48,300,42,5,GOLD if i<done else LINE)
 	var cur=game.region()
-	var side=""
 	if cur<6:
-		var s=Saga.data.side.get(str(cur),0)
-		side=Saga.regions[cur].side+" · "+(["Converse com o mestre local.",Saga.regions[cur].side_hint,"Concluída. O presente já pode ser equipado."][int(s)])
-	label(view,side,108,294,739,62,16,MUTED)
-	button(view,"Habilidades",108,382,202,42,skills)
-	button(view,"Enciclopédia",328,382,202,42,codex)
-	button(view,"Relações e cartas",548,382,237,42,memories)
+		var state=int(Saga.data.side.get(str(cur),0))
+		var hint=["Converse com o mestre local.",Saga.regions[cur].side_hint,"Concluída."][state]
+		label(view,Saga.regions[cur].side+"   ·   "+hint,108,343,744,47,16,MUTED)
+	button_icon(button(view,"Habilidades",108,396,223,40,skills),"lamina")
+	button_icon(button(view,"Enciclopédia",347,396,223,40,codex),"diario")
+	button_icon(button(view,"Relações e cartas",586,396,265,40,memories),"interagir")
 	footer()
 	focus_default()
 
@@ -213,11 +260,18 @@ func map_page():
 	rect(map,108,156,472,260)
 	map.here=Saga.origin(mini(game.region(),5))+Vector2(327,265) if game.world.interior else game.hero.position
 	map.picked=map_selection
-	map_text=label(view,"",602,156,246,155,20,PALE,true)
+	map_text=label(view,"",600,145,251,163,18,PALE,true)
 	travel_btn=button(view,"Viajar",603,323,246,42,func():game.travel(map_selection),true)
 	button(view,"Próxima região",603,376,246,39,func():map_selection=(map_selection+1)%6;map_page())
 	map.selected.connect(func(c):map_selection=c;map_details())
 	map_details()
+	label(view,"◆   Região selecionada       ●   Sua posição",109,413,480,28,14,MUTED)
+	var shown=Saga.settings.get_value("game","trail",true)
+	button(view,"Trilha · "+("visível" if shown else "oculta"),603,448,247,39,func():
+		Saga.settings.set_value("game","trail",not shown)
+		Saga.settings.save(Saga.SETTINGS)
+		game.world.trail.queue_redraw()
+		map_page())
 	footer()
 	focus_default()
 

@@ -58,7 +58,8 @@ func new_game():
 	Saga.save()
 
 func confirm_new():
-	ui.cinematic("Arquivo de viagem","Começar outra história?","Uma nova jornada substituirá o progresso salvo. Pressione Esc para voltar ao título e continuar a expedição atual.","Começar nova jornada",new_game)
+	ui.cinematic("Arquivo de viagem","Começar outra história?","Uma nova jornada substituirá o progresso salvo. Você também pode voltar ao título e continuar a expedição atual.","Começar nova jornada",new_game)
+	ui.button(ui.view,"Voltar ao título",370,449,223,42,ui.title_menu)
 
 func continue_game():
 	if not Saga.restore():
@@ -277,7 +278,7 @@ func _input(ev):
 	if not active:return
 	if is_locked():
 		if ui.mode=="dialog" and is_instance_valid(ui.typed) and ui.typed.visible_ratio<1 and ev.keycode in [KEY_SPACE,KEY_ENTER]:
-			ui.typed.visible_ratio=1
+			ui.reveal_text()
 			get_viewport().set_input_as_handled()
 		return
 	if ev.is_action_pressed("use"):interact()

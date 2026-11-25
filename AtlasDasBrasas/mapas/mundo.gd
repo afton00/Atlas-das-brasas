@@ -7,6 +7,7 @@ const HOME=Vector2(327,226)
 const CACHE=Vector2(135,128)
 const CRYPT=Vector2(85,448)
 const ARCH=Vector2(661,109)
+var trail
 var terrain:TileMapLayer
 var objects:Node2D
 var sites:Array=[]
@@ -56,6 +57,8 @@ func rebuild(inside:bool,r:int,room:String="hall"):
 	terrain=TileMapLayer.new()
 	terrain.tile_set=atlas
 	add_child(terrain)
+	trail=preload("res://mapas/trilha.gd").new()
+	add_child(trail)
 	objects=Node2D.new()
 	objects.y_sort_enabled=true
 	add_child(objects)
@@ -65,6 +68,7 @@ func rebuild(inside:bool,r:int,room:String="hall"):
 	else:
 		for n in 6: build_region(n)
 		walls(Rect2(Vector2.ZERO,Saga.AREA*Vector2(3,2)))
+	if inside:trail.rebuild(self)
 	var motes=preload("res://mapas/vestigios.gd").new()
 	motes.world=self
 	motes.z_index=2
@@ -86,6 +90,13 @@ func sprite_prop(pos:Vector2,idx:int,tag="",title="",solid=true,shadow=13.0):
 	n.setup(tag,title,load("res://personagens/s%d.png"%idx),solid,shadow)
 	objects.add_child(n)
 	if tag!="":sites.append(n)
+	return n
+
+func detail(pos:Vector2,idx:int,blocks:bool=false,radius:float=7):
+	var n=Lugar.new()
+	n.position=pos
+	n.setup("","",load("res://mapas/biomas/%02d.png"%idx),blocks,radius)
+	objects.add_child(n)
 	return n
 
 func obstacle(rect:Rect2):
@@ -138,9 +149,21 @@ func build_region(c:int):
 		if reserved.any(func(v):return p.distance_to(v)<48):continue
 		if planted.any(func(v):return p.distance_to(v)<24):continue
 		planted.append(p)
-		if c in [2,3,5] and i%3!=0:prop(base+p,7,"","",true,13)
-		elif i%3==0:prop(base+p,14,"","",true,9)
-		else:sprite_prop(base+p,15,"","",true,8)
+		var palettes=[[9,11,0,9,7],[11,9,8,6,11],[4,5,5,4,5],[6,7,6,7,6],[9,8,9,8,8],[10,7,11,10,10]]
+		var idx=int(palettes[c][i%5])
+		detail(base+p,idx,idx not in [0,8],9 if idx in [4,6,9,11] else 7)
+	# Village furniture gives the entrances and river crossings distinct silhouettes.
+	for spot in [HOME+Vector2(-29,2),POINTS[1]+Vector2(20,-5),CRYPT+Vector2(22,-5)]:
+		detail(base+spot,2)
+	for spot in [HOME+Vector2(-49,1),HOME+Vector2(48,1)]:
+		detail(base+spot,1)
+	detail(base+Vector2(354,244),3)
+	for k in 36:
+		var spot=Vector2(35+fmod(k*91.3,684),28+fmod(k*61.2,451))
+		var cell=Vector2i(base/16)+Vector2i(spot/16)
+		if terrain.get_cell_atlas_coords(cell).x in [0,1,2,3]:
+			if c in [0,1,4]:detail(base+spot,0 if k%3!=0 else 8)
+
 	if c==0:sprite_prop(base+HOME,14,"door",d.building,true,24)
 	else:prop(base+HOME,[0,0,1,2,3,4][c],"door",d.building,true,23)
 	sprite_prop(base+Vector2(238,151),14,"","",true,22)
@@ -217,6 +240,7 @@ func refresh():
 			if c<last_restored:
 				for x in range(25,35):
 					terrain.set_cell(base+Vector2i(x,21),0,Vector2i(17 if c==4 else 13,c))
+		trail.rebuild(self)
 	for n in sites:
 		var c=region if interior else Saga.region_at(n.position)
 		n.active=false

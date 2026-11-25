@@ -14,6 +14,12 @@ ao norte e ao sul permitem contornar uma ponte fechada. Cada selo recupera a
 travessia central de uma margem. O mapa permite escolher uma região visitada
 perto de um marco de viagem. O segundo selo libera essa viagem à distância.
 
+Orientação e leitura
+A trilha dourada acompanha o caminho transitável até o objetivo. No mapa,
+selecione uma região para ver seu destino ou use Trilha para ocultar as marcas.
+Em Configurações, escolha texto imediato ou gradual e reduza a animação das
+cenas. Durante um diálogo, toque no texto para exibir a fala inteira.
+
 Controles iniciais
 WASD ou setas   Caminhar             Shift       Correr
 E              Interagir            J           Atacar / carregar o arco

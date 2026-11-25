@@ -100,26 +100,32 @@ body {background:#11252b;}
 @media (orientation:portrait) and (pointer:coarse) {
  #rotate { display:block; position:fixed; bottom:7vh; left:5vw; width:90vw; text-align:center; color:#e6be7e; font:16px/1.5 system-ui; pointer-events:none; }
 }
+</style><style>
+#status { background:#101a28;visibility:visible }
+#status-splash.fullsize--true { object-fit:cover;opacity:.66 }
+#loading-copy {position:absolute;bottom:12%;left:7%;color:#fff0cd;font:600 clamp(18px,3vw,26px) Georgia,serif;text-shadow:0 2px 5px #121b29}
+#status-progress {width:min(420px,72%);height:7px;left:7%;right:auto;bottom:9%;margin:0;accent-color:#eac38c}
 </style></head>
 	<body>
 		<canvas id="canvas">
-			Your browser does not support the canvas tag.
+			O jogo precisa de um navegador compatível com WebGL 2.
 		</canvas>
 
 		<noscript>
-			Your browser does not support JavaScript.
+			Ative o JavaScript para iniciar o jogo.
 		</noscript>
 
 		<div id="status">
 			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="jogo.png" alt="">
-			<progress id="status-progress"></progress>
+			<div id="loading-copy" role="status">Preparando a jornada…</div>
+			<progress aria-label="Carregamento" id="status-progress"></progress>
 			<div id="status-notice"></div>
 		</div>
 
 		<script src="carregar.js"></script>
 <script src="jogo.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"jogo","experimentalVK":true,"fileSizes":{"jogo.pck":4592600,"jogo.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"jogo","experimentalVK":true,"fileSizes":{"jogo.pck":5629744,"jogo.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -142,6 +148,7 @@ const engine = new Engine(GODOT_CONFIG);
 		}
 		statusOverlay.style.visibility = 'visible';
 		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		document.getElementById('loading-copy').hidden = mode === 'notice';
 		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
 		statusMode = mode;
 	}

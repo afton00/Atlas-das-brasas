@@ -1,5 +1,6 @@
 extends Node2D
 
+var solid=false
 var tag=""
 var label=""
 var active=false
@@ -9,7 +10,8 @@ var art:Sprite2D
 var shadow_size=10.0
 var sound_radius=34.0
 
-func setup(id:String,title:String,tex:Texture2D,solid:bool,shadow:float=10.0):
+func setup(id:String,title:String,tex:Texture2D,is_solid:bool,shadow:float=10.0):
+	solid=is_solid
 	tag=id
 	label=title
 	shadow_size=shadow
