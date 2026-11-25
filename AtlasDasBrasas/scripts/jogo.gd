@@ -1,5 +1,6 @@
 extends Node2D
 
+const Weather=preload("res://scripts/tempo.gd")
 const World=preload("res://mapas/mundo.gd")
 const UI=preload("res://interfaces/interface.gd")
 const Hero=preload("res://personagens/aventureiro.gd")
@@ -211,7 +212,21 @@ func can_travel():
 	if Saga.data.chapter>=2:return true
 	return not world.interior and hero.position.distance_to(Saga.origin(region())+World.ARCH)<42
 
+func rain_destination()->Vector2:
+	if int(Saga.data.rain_day)<0:return World.WEATHER_BOARD
+	for c in 2:
+		if not Saga.data.rain_readings.has(str(c)):return Saga.origin(c)+World.GAUGES[c]
+	return World.WATER_CART
+
+func rain_objective()->String:
+	if int(Saga.data.rain_day)<0:return "Leia o boletim na Vila do Junco."
+	for c in 2:
+		if not Saga.data.rain_readings.has(str(c)):
+			return "Leia o pluviômetro em "+Saga.regions[c].place+"."
+	return "Envie a carroça de rega no Junco."
+
 func route_target()->Vector2:
+	if Saga.data.rain_route:return Vector2(256,291) if world.interior else rain_destination()
 	var care=int(Saga.data.care_route)
 	if care>=0 and care<Saga.rounds.size():
 		if world.interior:return Vector2(256,291)
@@ -242,6 +257,7 @@ func back_from_settings():
 
 func _process(dt):
 	if is_locked() or not is_instance_valid(hero):return
+	Saga.data.world_minutes+=dt*Weather.GAME_MINUTES_PER_SECOND
 	var c=region()
 	if c!=last_region:
 		if c<6 and c not in Saga.data.seen:Saga.data.seen.append(c)
@@ -306,6 +322,9 @@ func interact():
 		else:mentor(c)
 		return
 	match n.tag:
+		"weather_board":ui.weather_page(0)
+		"gauge":ui.gauge_page(c)
+		"water_cart":ui.cart_page()
 		"nurse":ui.care_index()
 		"care":ui.care_brief(c)
 		"door":

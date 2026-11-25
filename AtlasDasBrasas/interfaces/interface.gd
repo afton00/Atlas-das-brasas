@@ -1,4 +1,4 @@
-extends "res://interfaces/rondas.gd"
+extends "res://interfaces/observatorio.gd"
 
 const STANCE_ICONS=[preload("res://interfaces/icones/lamina.png"),preload("res://interfaces/icones/arco.png"),preload("res://interfaces/icones/magia.png")]
 const Map=preload("res://interfaces/cartografia.gd")
@@ -23,6 +23,8 @@ var book_page=0
 var book_ch=0
 var bearing:Label
 var touch_controls
+var weather_line:Label
+var weather_icon:Control
 var boss_card:Panel
 var boss_portrait:TextureRect
 var boss_health:ColorRect
@@ -44,11 +46,13 @@ func update_hud():
 	hplabel=label(hud,"",181,36,51,21,12,PALE,false,HORIZONTAL_ALIGNMENT_RIGHT)
 	mplabel=label(hud,"",181,54,51,21,12,PALE,false,HORIZONTAL_ALIGNMENT_RIGHT)
 	xpbar=line(hud,22,84,1,2,GOLD)
-	box(hud,649,13,296,97,Color("#141e2bee"),LINE)
+	box(hud,649,13,296,123,Color("#141e2bee"),LINE)
 	glyph(hud,"rumo",660,23,23)
 	region_label=label(hud,"",690,21,246,24,15,GOLD,true)
 	line(hud,663,51,268,1,LINE)
 	objective_label=label(hud,"",663,55,267,51,15,PALE)
+	weather_icon=sky_glyph(hud,0,false,665,108,23,20)
+	weather_line=label(hud,"",697,104,236,26,14,MUTED)
 	var touch=DisplayServer.is_touchscreen_available() or OS.has_feature("web_android") or OS.has_feature("web_ios")
 	if not touch:
 		var actions=[["Diário","diario",journal],["Mapa","mapa",open_map],["Mochila","mochila",bag],["Pausa","pausa",pause_page]]
@@ -95,6 +99,17 @@ func hud_tick():
 	objective_label.text="Siga a inscrição e abra o relicário." if game.world.room_type=="crypt" else Saga.objective()
 	if int(Saga.data.care_route)>=0:
 		objective_label.text="Saia para a estrada." if game.world.interior else "Ronda · "+Saga.rounds[int(Saga.data.care_route)].place
+	if Saga.data.rain_route:
+		objective_label.text="Saia para a estrada." if game.world.interior else game.rain_objective()
+	var minutes=float(Saga.data.world_minutes)
+	var slot=Weather.period(minutes)
+	var kind=Weather.sky(mini(c,5),Weather.day(minutes),slot)
+	weather_line.text=Weather.clock_text(minutes)+"  ·  "+("Interior" if game.world.interior else Weather.SKY_NAMES[kind])
+	weather_icon.visible=not game.world.interior
+	if weather_icon.kind!=kind or weather_icon.night!=(slot in [0,3]):
+		weather_icon.kind=kind
+		weather_icon.night=slot in [0,3]
+		weather_icon.queue_redraw()
 	level_label.text="Nível %d"%Saga.level()
 	xpbar.size.x=(int(Saga.data.xp)%100)*2.1
 	stance.texture=STANCE_ICONS[int(Saga.data.style)]
@@ -103,9 +118,9 @@ func hud_tick():
 	trail.follow(game.hero.position,destination)
 	var delta=trail.next_point-game.hero.position
 	var directions=["Leste","Sudeste","Sul","Sudoeste","Oeste","Noroeste","Norte","Nordeste"]
-	if Saga.data.won and not game.world.interior and int(Saga.data.care_route)<0:
+	trail.visible=not (Saga.data.won and not game.world.interior and int(Saga.data.care_route)<0 and not Saga.data.rain_route)
+	if not trail.visible:
 		bearing.text="Exploração livre"
-		trail.visible=false
 	elif game.hero.position.distance_to(destination)<32:bearing.text="Você chegou ao objetivo"
 	elif trail.available:bearing.text="%s   ·   %d passos pela trilha"%[directions[posmod(roundi(delta.angle()/(PI/4)),8)],ceili(trail.remaining/8)]
 	else:bearing.text="Consulte o mapa do reino"
@@ -189,6 +204,7 @@ func journal():
 	button_icon(button(view,"Habilidades",108,396,223,40,skills),"lamina")
 	button_icon(button(view,"Enciclopédia",347,396,223,40,codex),"diario")
 	button_icon(button(view,"Relações e cartas",586,396,265,40,memories),"interagir")
+	button(view,"Boletim das margens",315,449,252,38,func():weather_page(mini(game.region(),5)))
 	button(view,"Caderno de rondas · %d/6"%care_count(),586,449,265,38,care_index)
 	footer()
 	focus_default()
@@ -302,6 +318,7 @@ func map_page():
 	label(view,"◆ Região     ● Você",109,413,160,28,14,MUTED)
 	tex(view,"res://mapas/margens/insignia.png",260,418,18,20)
 	label(view,"Posto de cuidado",283,413,220,28,14,MUTED)
+	button(view,"Previsão da região",324,449,244,38,func():weather_page(map_selection))
 	var shown=Saga.settings.get_value("game","trail",true)
 	button(view,"Trilha · "+("visível" if shown else "oculta"),603,448,247,39,func():
 		Saga.settings.set_value("game","trail",not shown)

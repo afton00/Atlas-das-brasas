@@ -35,6 +35,7 @@ func at_care_site(c:int) -> bool:
 	return site!=null and site.get("tag")=="care"
 
 func set_care_route(c:int):
+	if c>=0:Saga.data.rain_route=false
 	Saga.data.care_route=c
 	Saga.save()
 

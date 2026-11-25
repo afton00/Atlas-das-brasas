@@ -149,6 +149,66 @@ func check_care_rounds():
 	g.interact()
 	check(g.ui.mode=="care_index","Conversa com Lia na oficina de Junco")
 
+func check_weather():
+	var weather=preload("res://scripts/tempo.gd")
+	var match_days=true
+	for d in 12:
+		match_days=match_days and weather.daily_rain(0,d)!=weather.daily_rain(1,d)
+	check(match_days,"Viveiros têm acumulados comparáveis e distintos")
+	check(weather.period(1439)==3 and weather.period(1440)==0 and weather.day(1440)==1,"Virada do dia")
+	g.build(true,0,Vector2(255,190))
+	g.ui.journal()
+	click("Boletim das margens")
+	var before=float(Saga.data.world_minutes)
+	g._process(2.0)
+	check(Saga.data.world_minutes==before,"Leitura do boletim pausa o relógio")
+	click("Aguardar o amanhecer")
+	check(Saga.data.world_minutes>before and weather.clock_text(Saga.data.world_minutes)=="06:00","Pouso no interior avança até o amanhecer")
+	g.build(false,0,g.world.WEATHER_BOARD+Vector2.DOWN*8)
+	g.ui.play()
+	before=Saga.data.world_minutes
+	g._process(1.0)
+	check(is_equal_approx(Saga.data.world_minutes-before,3.0),"Relógio avança durante exploração")
+	g.interact()
+	click("Ler o pedido")
+	click("Assumir a entrega")
+	check(Saga.data.rain_route and g.route_target()==g.world.GAUGES[0],"Missão inicia no quadro e aponta para o viveiro")
+	var day_of_record=int(Saga.data.rain_day)
+	for c in [1,0]:
+		if c==0:
+			Saga.data.world_minutes+=1440
+			g.return_title()
+			g.continue_game()
+			check(int(Saga.data.rain_day)==day_of_record and Saga.data.rain_readings.has("1"),"Salvamento preserva período e leitura parcial")
+		var pos=Saga.origin(c)+g.world.GAUGES[c]
+		g.world.trail.follow(g.hero.position,pos)
+		check(g.world.trail.available,"Trilha até o pluviômetro")
+		walk_to(pos+Vector2.DOWN*8)
+		g.interact()
+		check(g.ui.mode=="gauge","Leitura presencial do instrumento")
+		click("Anotar a leitura")
+		check(int(Saga.data.rain_readings[str(c)])==weather.daily_rain(c,day_of_record),"Registro do período fixado")
+	check(g.route_target()==g.world.WATER_CART,"As leituras apontam para a carroça")
+	walk_to(g.world.WATER_CART+Vector2.DOWN*9)
+	g.interact()
+	var dry=0 if int(Saga.data.rain_readings["0"])<int(Saga.data.rain_readings["1"]) else 1
+	var xp=Saga.data.xp
+	click("Enviar a "+g.ui.LOG_NAMES[1-dry])
+	check(int(Saga.data.rain_recipient)==-1 and Saga.data.xp==xp,"Erro explica a comparação e permite corrigir")
+	click("Enviar a "+g.ui.LOG_NAMES[dry])
+	check(int(Saga.data.rain_recipient)==dry and Saga.data.xp==xp+60 and not Saga.data.rain_route,"Carroça abastece o viveiro escolhido")
+	var grown=0
+	for plant in g.world.nursery_plants:
+		if plant.visible and Saga.region_at(plant.position)==dry:grown+=1
+	check(grown==3,"O resultado da rega aparece no cenário")
+	g.ui.deliver_water(dry)
+	check(Saga.data.xp==xp+60,"Reabrir o relatório não duplica a entrega")
+	check(Saga.restore() and int(Saga.data.rain_recipient)==dry,"Relatório final e entrega persistem")
+	g.ui.play()
+	g.ui.open_map()
+	click("Previsão da região")
+	check(g.ui.mode=="weather","Previsão acessível pelo mapa")
+
 func run():
 	await get_tree().process_frame
 	check(g.ui.mode=="menu","Menu inicial")
@@ -299,6 +359,7 @@ func run():
 	check(Saga.data.won and Saga.data.chapter==6 and Saga.data.learned.size()==29 and Saga.has_skill(0),"Carregar campanha concluída")
 	check(Saga.data.letter!="","Texto autoral persistido")
 	check_care_rounds()
+	check_weather()
 	print("ATLAS: %d verificações; %d falhas."%[checks,failures.size()])
 	get_tree().quit(0 if failures.is_empty() else 1)
 

@@ -3,6 +3,9 @@ extends Node2D
 const Lugar=preload("res://mapas/lugar.gd")
 const Mentor=preload("res://personagens/mentor.gd")
 const POINTS=[Vector2(446,250),Vector2(595,383),Vector2(146,383)]
+const WEATHER_BOARD=Vector2(305,305)
+const WATER_CART=Vector2(385,338)
+const GAUGES=[Vector2(419,143),Vector2(207,340)]
 const HOME=Vector2(327,226)
 const CACHE=Vector2(135,128)
 const CRYPT=Vector2(85,448)
@@ -37,6 +40,7 @@ var nature_rng=RandomNumberGenerator.new()
 var ambient=0.0
 var destination=Vector2.ZERO
 var last_restored=-1
+var nursery_plants:Array=[]
 
 func configure(owner_game):
 	game=owner_game
@@ -57,11 +61,13 @@ func configure(owner_game):
 			td.set_collision_polygon_points(0,0,PackedVector2Array([Vector2(-8,-8),Vector2(8,-8),Vector2(8,8),Vector2(-8,8)]))
 
 func rebuild(inside:bool,r:int,room:String="hall"):
+	modulate=Color.WHITE
 	room_type=room
 	for ch in get_children():
 		remove_child(ch)
 		ch.queue_free()
 	sites.clear()
+	nursery_plants.clear()
 	mentors.clear()
 	residents.clear()
 	interior=inside
@@ -149,6 +155,8 @@ func build_region(c:int):
 			terrain.set_cell(Vector2i(base/16)+Vector2i(channel+x,y),0,Vector2i(tile,c))
 	var reserved=[CARE_POINTS[c],HOME,CACHE,ARCH,CRYPT,Vector2(382,172),Vector2(207,215),Vector2(568,105),Vector2(238,151),Vector2(435,330),Vector2(543,300),Vector2(120,342)]
 	reserved.append_array(POINTS)
+	if c<=1:reserved.append(GAUGES[c])
+	if c==0:reserved.append_array([WEATHER_BOARD,WATER_CART])
 	var planted:Array=[]
 	for i in 185:
 		var p=Vector2(nature_rng.randf_range(12,757),nature_rng.randf_range(20,509))
@@ -173,6 +181,14 @@ func build_region(c:int):
 		if terrain.get_cell_atlas_coords(cell).x in [0,1,2,3]:
 			if c in [0,1,4]:detail(base+spot,0 if k%3!=0 else 8)
 
+	if c<=1:
+		place(base+GAUGES[c],load("res://mapas/estacao/pluviometro.png"),"gauge","Pluviômetro do viveiro",true,7)
+		for offset in [Vector2(18,5),Vector2(30,4),Vector2(24,13)]:
+			var plants=margem(base+GAUGES[c]+offset,"plant","","",false,3)
+			nursery_plants.append(plants)
+	if c==0:
+		place(base+WEATHER_BOARD,load("res://mapas/estacao/boletim.png"),"weather_board","Boletim das margens",true,8)
+		place(base+WATER_CART,load("res://mapas/estacao/carroca.png"),"water_cart","Carroça de rega",true,17)
 	margem(base+HOME,WORKSHOPS[c],"door",d.building,true,23)
 	margem(base+Vector2(238,151),VILLAGES[c],"","",true,18)
 	margem(base+Vector2(568,105),TRADES[c],"","",true,18)
@@ -241,6 +257,8 @@ func channel_x(c:int,y:int)->int:
 	return 30+roundi(sin((y+c*2)*.24)*1.65)
 
 func refresh():
+	for plant in nursery_plants:
+		plant.visible=Saga.region_at(plant.position)==int(Saga.data.rain_recipient)
 	if not interior and last_restored!=Saga.data.chapter:
 		last_restored=Saga.data.chapter
 		for c in 6:

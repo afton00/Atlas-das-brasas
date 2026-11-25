@@ -75,3 +75,12 @@ As ilustrações e bases de sprites da edição anterior foram produzidas com o 
 imagens do GPT. Os quadros, terrenos, mapa, composição musical e efeitos
 foram preparados para este projeto. As fontes Liberation acompanham sua
 licença em interfaces/LICENCA-fontes.txt.
+
+Boletim das margens
+A luz e o tempo mudam durante a exploração. Os menus pausam o relógio.
+No mapa, selecione uma região e abra sua previsão. Em uma escola ou oficina,
+o boletim da região permite aguardar até as 6h. A opção Animação reduzida
+retira as partículas de chuva, neve e vento.
+Ao sul da oficina do Junco, leia o quadro e aceite A água dos viveiros.
+Visite os dois pluviômetros e compare as medidas do mesmo dia para enviar a
+carroça ao viveiro que recebeu menos água. O boletim no diário guarda o relatório.
