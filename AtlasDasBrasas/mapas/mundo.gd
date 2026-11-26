@@ -1,5 +1,10 @@
 extends Node2D
 
+const Sectors=preload("res://mapas/setores.gd")
+const Expedition=preload("res://mapas/expedicao.gd")
+const Obra=preload("res://mapas/obra.gd")
+const Frontier=preload("res://mapas/fronteiras.gd")
+const Visitors=preload("res://personagens/visitantes.gd")
 const Lugar=preload("res://mapas/lugar.gd")
 const Mentor=preload("res://personagens/mentor.gd")
 const POINTS=[Vector2(446,250),Vector2(595,383),Vector2(146,383)]
@@ -41,9 +46,28 @@ var ambient=0.0
 var destination=Vector2.ZERO
 var last_restored=-1
 var nursery_plants:Array=[]
+var loaded:Dictionary={}
+var current_sector:=Vector2i(-1,-1)
+var pending_update:=false
+var queued_sectors:Array[Vector2i]=[]
+var hub_rng_states:Array[int]=[]
 
 func configure(owner_game):
 	game=owner_game
+	# Reproduce the legacy RNG stream for each hub regardless of load order.
+	var legacy=RandomNumberGenerator.new()
+	legacy.seed=52731
+	var offsets=[Vector2i.UP,Vector2i.LEFT,Vector2i.DOWN,Vector2i.RIGHT]
+	for c in 6:
+		hub_rng_states.append(legacy.state)
+		for y in 32:
+			for x in 48:
+				legacy.randi_range(0,3)
+				if is_road(x,y) and offsets.all(func(v):return is_road(x+v.x,y+v.y)):
+					legacy.randi_range(4,7)
+		for i in 185:
+			legacy.randf_range(12,757)
+			legacy.randf_range(20,509)
 	atlas=TileSet.new()
 	atlas.tile_size=Vector2i(16,16)
 	atlas.add_physics_layer()
@@ -54,13 +78,14 @@ func configure(owner_game):
 	for j in 7:
 		for i in 34: source.create_tile(Vector2i(i,j))
 	atlas.add_source(source,0)
+	Frontier.register_tiles(atlas)
 	for j in 7:
 		for k in [8,9,10,16]:
 			var td=source.get_tile_data(Vector2i(k,j),0)
 			td.set_collision_polygons_count(0,1)
 			td.set_collision_polygon_points(0,0,PackedVector2Array([Vector2(-8,-8),Vector2(8,-8),Vector2(8,8),Vector2(-8,8)]))
 
-func rebuild(inside:bool,r:int,room:String="hall"):
+func rebuild(inside:bool,r:int,room:String="hall",entry:Vector2=Vector2.ZERO):
 	modulate=Color.WHITE
 	room_type=room
 	for ch in get_children():
@@ -68,6 +93,9 @@ func rebuild(inside:bool,r:int,room:String="hall"):
 		ch.queue_free()
 	sites.clear()
 	nursery_plants.clear()
+	loaded.clear()
+	queued_sectors.clear()
+	current_sector=Vector2i(-1,-1)
 	mentors.clear()
 	residents.clear()
 	interior=inside
@@ -83,11 +111,14 @@ func rebuild(inside:bool,r:int,room:String="hall"):
 	objects.y_sort_enabled=true
 	add_child(objects)
 	if inside:
-		if room_type=="crypt":build_crypt(r)
+		var frontier=Frontier.id_from_room(room_type)
+		if frontier>=0:Frontier.build(self,frontier)
+		elif room_type.begins_with("field_"):Expedition.build_room(self,r,room_type=="field_cave")
+		elif room_type=="crypt":build_crypt(r)
 		else:build_room(r)
 	else:
-		for n in 6: build_region(n)
-		walls(Rect2(Vector2.ZERO,Saga.AREA*Vector2(3,2)))
+		walls(Sectors.bounds())
+		stream(entry)
 	if inside:trail.rebuild(self)
 	var motes=preload("res://mapas/vestigios.gd").new()
 	motes.world=self
@@ -95,6 +126,66 @@ func rebuild(inside:bool,r:int,room:String="hall"):
 	add_child(motes)
 	refresh()
 	queue_redraw()
+
+func stream(position_to_load:Vector2,immediate:bool=true):
+	if interior:return
+	var center=Sectors.at(position_to_load)
+	var moved=center!=current_sector
+	if moved:
+		current_sector=center
+		queued_sectors.clear()
+		var wanted:Dictionary={}
+		for y in range(center.y-1,center.y+2):
+			for x in range(center.x-1,center.x+2):
+				var cell=Vector2i(x,y)
+				if Sectors.realm_at(cell)>=0:wanted[cell]=true
+		for cell in loaded.keys():
+			if not wanted.has(cell):unload_sector(cell)
+		for cell in wanted:
+			if not loaded.has(cell):queued_sectors.append(cell)
+		queued_sectors.sort_custom(func(a,b):return (a-center).length_squared()<(b-center).length_squared())
+		Saga.data.visited_sectors[Sectors.key(center)]=true
+		var area=Expedition.entry(center)
+		if not area.is_empty():Saga.data.discoveries[area[2]]=true
+	if not moved and queued_sectors.is_empty():return
+	# On foot the next chunk is already present. Refill the outer ring over
+	# several frames, prioritizing the player if entering via a warp.
+	var batch=queued_sectors.size() if immediate else mini(1,queued_sectors.size())
+	for i in batch:load_sector(queued_sectors.pop_front())
+	pending_update=true
+	refresh()
+
+func unload_sector(cell:Vector2i):
+	var group:Dictionary=loaded[cell]
+	for node in group.nodes:
+		if not is_instance_valid(node):continue
+		sites.erase(node)
+		mentors.erase(node)
+		residents.erase(node)
+		nursery_plants.erase(node)
+		game.enemies.erase(node)
+		node.queue_free()
+		if node.get_parent()==objects:objects.remove_child(node)
+	for enemy in game.enemies.duplicate():
+		if not enemy.dead and Sectors.at(enemy.home)==cell:
+			game.enemies.erase(enemy)
+			enemy.queue_free()
+			if enemy.get_parent()==objects:objects.remove_child(enemy)
+	var base=Vector2i(Sectors.origin(cell))/16
+	for y in 32:
+		for x in 48:terrain.erase_cell(base+Vector2i(x,y))
+	loaded.erase(cell)
+
+func load_sector(cell:Vector2i):
+	var realm=Sectors.realm_at(cell)
+	var previous=objects.get_child_count()
+	if cell==Sectors.hub(realm):
+		nature_rng.state=hub_rng_states[realm]
+		build_region(realm)
+		game.populate_hub(realm)
+	else:
+		Expedition.paint(self,cell,realm)
+	loaded[cell]={"nodes":objects.get_children().slice(previous)}
 
 func place(pos:Vector2,texture:Texture2D,tag="",title="",solid=true,shadow=13.0):
 	var n=Lugar.new()
@@ -156,7 +247,9 @@ func build_region(c:int):
 	var reserved=[CARE_POINTS[c],HOME,CACHE,ARCH,CRYPT,Vector2(382,172),Vector2(207,215),Vector2(568,105),Vector2(238,151),Vector2(435,330),Vector2(543,300),Vector2(120,342)]
 	reserved.append_array(POINTS)
 	if c<=1:reserved.append(GAUGES[c])
-	if c==0:reserved.append_array([WEATHER_BOARD,WATER_CART])
+	if c==0:reserved.append_array([WEATHER_BOARD,WATER_CART,Obra.POSITION])
+	var frontier=Frontier.ORIGINS.find(c)
+	if frontier>=0:reserved.append(Frontier.GATES[frontier])
 	var planted:Array=[]
 	for i in 185:
 		var p=Vector2(nature_rng.randf_range(12,757),nature_rng.randf_range(20,509))
@@ -205,6 +298,8 @@ func build_region(c:int):
 		prop(base+Vector2(382,172),12,"","",true,14)
 		prop(base+Vector2(207,215),8,"","",true,9)
 	if c==0:prop(base+Vector2(205,297),9,"arena","Escola de combate",true,11)
+	if c==0:Obra.install(self)
+	if frontier>=0:prop(base+Frontier.GATES[frontier],5,"frontier"+str(frontier),Frontier.NAMES[frontier],true,14)
 	var walker=Mentor.new()
 	walker.setup(c,base+Vector2(365,268),game.is_locked)
 	objects.add_child(walker)
@@ -226,6 +321,7 @@ func build_room(c:int):
 		var x=30+i*65
 		prop(Vector2(x,56),7 if cave else [10,9,11][i%3],"","",true,10)
 	if not cave:
+		Visitors.adicionar(self,c)
 		prop(Vector2(145,164),[9,10,10,11,13,9][c],"desk","Acervo de "+str(Saga.regions[c].name),true,13)
 		var m=Mentor.new()
 		m.setup(c,Vector2(257,144),game.is_locked)
@@ -259,9 +355,11 @@ func channel_x(c:int,y:int)->int:
 func refresh():
 	for plant in nursery_plants:
 		plant.visible=Saga.region_at(plant.position)==int(Saga.data.rain_recipient)
-	if not interior and last_restored!=Saga.data.chapter:
+	if not interior and (last_restored!=Saga.data.chapter or pending_update):
+		pending_update=false
 		last_restored=Saga.data.chapter
 		for c in 6:
+			if not loaded.has(Sectors.hub(c)):continue
 			var base=Vector2i(Saga.origin(c)/16)
 			for y in [15,16,17]:
 				for x in 3:
@@ -272,6 +370,7 @@ func refresh():
 					terrain.set_cell(base+Vector2i(x,21),0,Vector2i(17 if c==4 else 13,c))
 		trail.rebuild(self)
 	for n in sites:
+		if not n is Lugar:continue
 		var c=region if interior else Saga.region_at(n.position)
 		n.active=false
 		if n.tag=="door" and c==Saga.data.chapter:

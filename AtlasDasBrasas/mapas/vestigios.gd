@@ -31,8 +31,8 @@ func _draw():
 		return
 	var lo=Vector2i((h-Vector2(270,170))/16)
 	var hi=Vector2i((h+Vector2(270,170))/16)
-	for y in range(maxi(0,lo.y),mini(64,hi.y+1)):
-		for x in range(maxi(0,lo.x),mini(144,hi.x+1)):
+	for y in range(lo.y,hi.y+1):
+		for x in range(lo.x,hi.x+1):
 			if (x+y*3)%5!=0:continue
 			var a=world.terrain.get_cell_atlas_coords(Vector2i(x,y)).x
 			var p=Vector2(x,y)*16

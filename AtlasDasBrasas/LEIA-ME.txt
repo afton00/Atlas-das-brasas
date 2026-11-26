@@ -84,3 +84,10 @@ retira as partículas de chuva, neve e vento.
 Ao sul da oficina do Junco, leia o quadro e aceite A água dos viveiros.
 Visite os dois pluviômetros e compare as medidas do mesmo dia para enviar a
 carroça ao viveiro que recebeu menos água. O boletim no diário guarda o relatório.
+
+Expansão de Junco e Lume
+Siga a estrada para leste, pelo Porto dos Viajantes e pelo Entreposto do
+Livro. Ao encontrar a passarela em reparo, calcule a medida ou use a ponte
+secundária ao norte ou ao sul. No mapa principal, escolha Mapa regional para
+ver os setores conhecidos. Arraste após ampliar para inspecionar áreas da
+região. Ative os marcos de viagem nas instalações da estrada.

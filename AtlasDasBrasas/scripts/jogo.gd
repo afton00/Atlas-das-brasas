@@ -1,5 +1,8 @@
 extends Node2D
 
+const Sectors=preload("res://mapas/setores.gd")
+const Expedition=preload("res://mapas/expedicao.gd")
+const Frontier=preload("res://mapas/fronteiras.gd")
 const Weather=preload("res://scripts/tempo.gd")
 const World=preload("res://mapas/mundo.gd")
 const UI=preload("res://interfaces/interface.gd")
@@ -54,7 +57,7 @@ func new_game():
 	active=true
 	last_region=-1
 	gather_clock.clear()
-	build(false,0,Vector2(329,269))
+	build(false,0,Saga.origin(0)+Vector2(329,269))
 	ui.cinematic("Prólogo  /  Vila do Junco","O dia em que o rio subiu","O sino toca antes do amanhecer. Do fundo do rio sobem brasas frias, e a ponte que liga as duas margens pende de uma corda. Você ainda nunca saiu da vila. Iria põe uma régua em sua mão.","Descer até a margem",ui.tutorial,0)
 	Saga.save()
 
@@ -78,25 +81,32 @@ func build(inside:bool,c:int,pos:Vector2,room:String="hall"):
 	enemies.clear()
 	familiar=null
 	escort_time=0
-	world.rebuild(inside,c,room)
+	world.rebuild(inside,c,room,pos)
 	hero=Hero.new()
 	world.objects.add_child(hero)
-	hero.setup(self,pos,Rect2(Vector2.ZERO,Vector2(512,320) if inside else Saga.AREA*Vector2(3,2)))
+	hero.setup(self,pos,Rect2(0,0,512,320) if inside else Sectors.bounds())
 	Saga.data.room=room
 	Saga.data.inside=inside
 	Saga.data.interior=c
 	Saga.data.pos=[pos.x,pos.y]
-	if inside and c==6 and not Saga.data.won:spawn(3,6,Vector2(250,109),true,"dragon")
+	if inside and room=="field_cave":
+		var id="deep_"+Sectors.key(Expedition.return_cell())
+		if id not in Saga.data.kills:spawn(0,c,Vector2(401,145),false,id)
+	elif inside and c==6 and not Saga.data.won:spawn(3,6,Vector2(250,109),true,"dragon")
 	elif inside and room=="crypt" and "cripta"+str(c) not in Saga.data.kills:
 		spawn(2,c,Vector2(410,201),false,"cripta"+str(c))
-	elif not inside:
-		for i in 6:
-			var base=Saga.origin(i)
-			for j in 3:
-				var id="roam%d_%d"%[i,j]
-				if id not in Saga.data.kills:spawn([0,1,2,1,0,2][i] if j!=1 else (i+1)%3,i,base+[Vector2(423,374),Vector2(684,331),Vector2(65,183)][j],false,id)
-			if i in [2,5] and "side"+str(i) not in Saga.data.kills:spawn(2,i,base+World.CACHE+Vector2(20,8),false,"side"+str(i))
 	world.refresh()
+
+func populate_hub(realm:int):
+	var base=Saga.origin(realm)
+	for j in 3:
+		var id="roam%d_%d"%[realm,j]
+		if id not in Saga.data.kills:
+			var kind=[0,1,2,1,0,2][realm] if j!=1 else (realm+1)%3
+			spawn(kind,realm,base+[Vector2(423,374),Vector2(684,331),Vector2(65,183)][j],false,id)
+	if realm in [2,5] and "side"+str(realm) not in Saga.data.kills:
+		spawn(2,realm,base+World.CACHE+Vector2(20,8),false,"side"+str(realm))
+
 
 func spawn(kind,c,pos,boss,id):
 	var e=Enemy.new()
@@ -208,15 +218,28 @@ func travel(c:int):
 	ui.play()
 	Saga.save()
 
+func map_waypoint()->Vector2i:
+	var saved=str(Saga.data.expedition.get("waypoint","")).split(",")
+	return Vector2i(int(saved[0]),int(saved[1])) if saved.size()==2 else Vector2i(-1,-1)
+
+func travel_to_sector(cell:Vector2i):
+	var c=Sectors.realm_at(cell)
+	if c<0 or not can_travel() or not Saga.data.expedition.has("marker_"+Sectors.key(cell)):return
+	build(false,c,Sectors.origin(cell)+Sectors.CROSSROAD)
+	ui.play()
+	Saga.save()
+
 func can_travel():
 	if Saga.data.chapter>=2:return true
-	return not world.interior and hero.position.distance_to(Saga.origin(region())+World.ARCH)<42
+	if world.interior:return false
+	var near=world.nearest(hero.position)
+	return (near!=null and near.get("tag")=="field_marker") or hero.position.distance_to(Saga.origin(region())+World.ARCH)<42
 
 func rain_destination()->Vector2:
-	if int(Saga.data.rain_day)<0:return World.WEATHER_BOARD
+	if int(Saga.data.rain_day)<0:return Saga.origin(0)+World.WEATHER_BOARD
 	for c in 2:
 		if not Saga.data.rain_readings.has(str(c)):return Saga.origin(c)+World.GAUGES[c]
-	return World.WATER_CART
+	return Saga.origin(0)+World.WATER_CART
 
 func rain_objective()->String:
 	if int(Saga.data.rain_day)<0:return "Leia o boletim na Vila do Junco."
@@ -226,11 +249,16 @@ func rain_objective()->String:
 	return "Envie a carroça de rega no Junco."
 
 func route_target()->Vector2:
+	var frontier=Frontier.id_from_room(world.room_type)
+	if frontier>=0:return Frontier.target(self,frontier)
+	if world.room_type.begins_with("field_"):return Expedition.LODGE_EXIT
 	if Saga.data.rain_route:return Vector2(256,291) if world.interior else rain_destination()
 	var care=int(Saga.data.care_route)
 	if care>=0 and care<Saga.rounds.size():
 		if world.interior:return Vector2(256,291)
 		return Saga.origin(care)+World.CARE_POINTS[care]
+	var marker=map_waypoint()
+	if not world.interior and marker.x>=0:return Sectors.origin(marker)+Sectors.CROSSROAD
 	var c=int(Saga.data.chapter)
 	if world.room_type=="crypt":
 		var st=int(Saga.data.ruins.get(str(world.region),0))
@@ -258,6 +286,11 @@ func back_from_settings():
 func _process(dt):
 	if is_locked() or not is_instance_valid(hero):return
 	Saga.data.world_minutes+=dt*Weather.GAME_MINUTES_PER_SECOND
+	if not world.interior:
+		var before=world.current_sector
+		world.stream(hero.position,false)
+		if before!=world.current_sector and not Expedition.entry(world.current_sector).is_empty():
+			toast(Expedition.name_at(world.current_sector))
 	var c=region()
 	if c!=last_region:
 		if c<6 and c not in Saga.data.seen:Saga.data.seen.append(c)
@@ -321,7 +354,20 @@ func interact():
 		if n.resident:resident_talk(c)
 		else:mentor(c)
 		return
+	if n.tag.begins_with("field_"):
+		Expedition.interact(self,n)
+		return
+	if n.tag.begins_with("visita_"):
+		World.Visitors.interagir(ui,n.tag)
+		return
+	if n.tag.begins_with("frontier"):
+		Frontier.gate(self,int(n.tag.trim_prefix("frontier")))
+		return
+	if n.tag.begins_with("voy_"):
+		Frontier.interact(self,Frontier.id_from_room(world.room_type),n.tag)
+		return
 	match n.tag:
+		"workshop":World.Obra.interact(self,n)
 		"weather_board":ui.weather_page(0)
 		"gauge":ui.gauge_page(c)
 		"water_cart":ui.cart_page()
@@ -401,7 +447,7 @@ func start_training():
 			ui.play()
 			toast("O boneco já está na arena.")
 			return
-	var dummy=spawn(2,0,Vector2(211,320),false,"treino")
+	var dummy=spawn(2,0,Saga.origin(0)+Vector2(211,320),false,"treino")
 	dummy.hp_max=30
 	dummy.hp=30
 	ui.play()

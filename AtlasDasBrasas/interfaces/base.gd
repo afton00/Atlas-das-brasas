@@ -235,14 +235,34 @@ func reveal_text():
 		typing=typed.text.length()
 		typed.visible_ratio=1
 
-func dialogue(c,title,body,choices,local=false):
+func expressao_iria(title: String) -> String:
+	if title == "Relíquia do rio":
+		return "surpresa"
+	if title in ["Pedido atendido","Descoberta registrada","Revisão concluída"]:
+		return "feliz"
+	if title == "Um acordo entre margens":
+		return "feliz" if Saga.data.choices.get("0") == "partilhar" else "determinada"
+	if title == Saga.regions[0].side or (title == Saga.regions[0].role and not Saga.data.briefed and Saga.data.chapter == 0):
+		return "preocupada"
+	if title == "Escola de combate":
+		return "determinada"
+	return "normal"
+
+func dialogue(c,title,body,choices,local=false,speaker:Dictionary={}):
 	wipe("dialog")
 	gradient(view,0,0,960,540,PackedColorArray([Color(0,0,0,.12),Color("#131e2b44"),Color("#0c1322d9")]),true)
 	box(view,36,249,888,262,INK,LINE)
 	var accent=Color(Saga.regions[c].color)
 	line(view,58,272,3,175,accent)
-	tex(view,("res://personagens/morador_%d.png" if local else "res://personagens/retrato_%d.png")%c,68,273,127,127)
-	label(view,Saga.regions[c].resident if local else Saga.regions[c].name,68,405,128,30,22,GOLD,true,HORIZONTAL_ALIGNMENT_CENTER)
+	var portrait=("res://personagens/morador_%d.png" if local else "res://personagens/retrato_%d.png")%c
+	var actor_name=Saga.regions[c].resident if local else Saga.regions[c].name
+	if not speaker.is_empty():
+		portrait=speaker.retrato
+		actor_name=speaker.nome
+	elif not local and c==0:
+		portrait="res://personagens/visitas/iria_%s.png"%expressao_iria(title)
+	tex(view,portrait,68,273,127,127)
+	label(view,actor_name,68,405,128,30,22,GOLD,true,HORIZONTAL_ALIGNMENT_CENTER)
 	label(view,Saga.regions[c].place.to_upper(),219,265,662,26,13,accent.lightened(.25))
 	label(view,title,218,293,663,32,24,PALE,true)
 	typed=label(view,body,219,333,673,101,16 if str(body).length()>290 else 18,PALE)

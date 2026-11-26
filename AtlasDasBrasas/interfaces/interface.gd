@@ -1,6 +1,11 @@
 extends "res://interfaces/observatorio.gd"
 
 const STANCE_ICONS=[preload("res://interfaces/icones/lamina.png"),preload("res://interfaces/icones/arco.png"),preload("res://interfaces/icones/magia.png")]
+const Sectors=preload("res://mapas/setores.gd")
+const RegionalMap=preload("res://interfaces/mapa_regional.gd")
+const Minimap=preload("res://interfaces/minimapa.gd")
+const Expedition=preload("res://mapas/expedicao.gd")
+const Bestiary=preload("res://interfaces/bestiario.gd")
 const Map=preload("res://interfaces/cartografia.gd")
 const Mentor=preload("res://personagens/mentor.gd")
 var xpbar:ColorRect
@@ -29,6 +34,8 @@ var boss_card:Panel
 var boss_portrait:TextureRect
 var boss_health:ColorRect
 var boss_label:Label
+var minimap:Control
+var regional_selection:=Vector2i(-1,-1)
 
 func update_hud():
 	clear(hud)
@@ -53,6 +60,12 @@ func update_hud():
 	objective_label=label(hud,"",663,55,267,51,15,PALE)
 	weather_icon=sky_glyph(hud,0,false,665,108,23,20)
 	weather_line=label(hud,"",697,104,236,26,14,MUTED)
+	minimap=Minimap.new()
+	minimap.game=game
+	hud.add_child(minimap)
+	minimap.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	minimap.clip_contents=true
+	rect(minimap,15,99,88,54)
 	var touch=DisplayServer.is_touchscreen_available() or OS.has_feature("web_android") or OS.has_feature("web_ios")
 	if not touch:
 		var actions=[["Diário","diario",journal],["Mapa","mapa",open_map],["Mochila","mochila",bag],["Pausa","pausa",pause_page]]
@@ -89,13 +102,15 @@ func _process(dt):
 
 func hud_tick():
 	if not is_instance_valid(hpbar) or not is_instance_valid(game.hero):return
+	minimap.visible=not game.world.interior
+	minimap.queue_redraw()
 	hpbar.size.x=91*Saga.data.hp/Saga.max_hp()
 	mpbar.size.x=91*Saga.data.mp/Saga.max_mp()
 	hplabel.text="%d/%d"%[ceili(Saga.data.hp),int(Saga.max_hp())]
 	mplabel.text="%d/%d"%[int(Saga.data.mp),int(Saga.max_mp())]
 	style_label.text=["Lâmina","Arco","Magia"][Saga.data.style]
 	var c=game.region()
-	region_label.text=("Caldeira de Aster" if c==6 else Saga.regions[c].place).to_upper()
+	region_label.text=("Caldeira de Aster" if c==6 else Saga.regions[c].place if game.world.interior else Expedition.name_at(game.world.current_sector)).to_upper()
 	objective_label.text="Siga a inscrição e abra o relicário." if game.world.room_type=="crypt" else Saga.objective()
 	if int(Saga.data.care_route)>=0:
 		objective_label.text="Saia para a estrada." if game.world.interior else "Ronda · "+Saga.rounds[int(Saga.data.care_route)].place
@@ -110,6 +125,11 @@ func hud_tick():
 		weather_icon.kind=kind
 		weather_icon.night=slot in [0,3]
 		weather_icon.queue_redraw()
+	var waypoint=game.map_waypoint()
+	if not game.world.interior and waypoint.x>=0 and not Saga.data.rain_route and int(Saga.data.care_route)<0:
+		objective_label.text="Destino · "+Expedition.name_at(waypoint)
+	var frontier=game.Frontier.id_from_room(game.world.room_type)
+	if frontier>=0:objective_label.text=game.Frontier.objective(frontier)
 	level_label.text="Nível %d"%Saga.level()
 	xpbar.size.x=(int(Saga.data.xp)%100)*2.1
 	stance.texture=STANCE_ICONS[int(Saga.data.style)]
@@ -118,7 +138,7 @@ func hud_tick():
 	trail.follow(game.hero.position,destination)
 	var delta=trail.next_point-game.hero.position
 	var directions=["Leste","Sudeste","Sul","Sudoeste","Oeste","Noroeste","Norte","Nordeste"]
-	trail.visible=not (Saga.data.won and not game.world.interior and int(Saga.data.care_route)<0 and not Saga.data.rain_route)
+	trail.visible=not (Saga.data.won and not game.world.interior and int(Saga.data.care_route)<0 and not Saga.data.rain_route and waypoint.x<0)
 	if not trail.visible:
 		bearing.text="Exploração livre"
 	elif game.hero.position.distance_to(destination)<32:bearing.text="Você chegou ao objetivo"
@@ -157,7 +177,8 @@ func pause_page():
 	button(view,"Salvar jornada",482,229,367,48,func():toast("Jornada salva." if Saga.save() else "Não foi possível salvar."))
 	button(view,"Configurações",108,293,352,48,settings_page)
 	button(view,"Como jogar",482,293,367,48,tutorial)
-	button(view,"Enciclopédia",108,357,352,48,codex)
+	button(view,"Enciclopédia",108,357,168,48,codex)
+	button(view,"Bestiário",286,357,174,48,func():Bestiary.open(self,mini(game.region(),5),"",pause_page))
 	button(view,"Salvar e voltar ao título",482,357,367,48,game.return_title)
 	focus_default()
 
@@ -223,7 +244,7 @@ func bag():
 	panel_page("bag","Equipamentos e oficina","Mochila")
 	line(view,467,152,1,259,LINE)
 	label(view,"Equipamento",108,146,332,32,23,GOLD,true)
-	label(view,"%s   ·   %s"%[Saga.WEAPONS[Saga.data.weapon],"Cota de malha" if Saga.data.armor else "Túnica de viagem"],108,185,340,32,16)
+	label(view,"%s   ·   %s"%[("Espada das Brasas" if Saga.data.weapon==0 and Saga.data.get("ember_sword",false) else Saga.WEAPONS[Saga.data.weapon]),"Cota de malha" if Saga.data.armor else "Túnica de viagem"],108,185,340,32,16)
 	label(view,"Acessório · "+(Saga.data.charm if Saga.data.charm!="" else "Nenhum"),108,218,342,31,15,MUTED)
 	button(view,"Alternar arma",108,263,162,38,func():
 		var a=Saga.data.weapons
@@ -318,9 +339,12 @@ func map_page():
 	label(view,"◆ Região     ● Você",109,413,160,28,14,MUTED)
 	tex(view,"res://mapas/margens/insignia.png",260,418,18,20)
 	label(view,"Posto de cuidado",283,413,220,28,14,MUTED)
-	button(view,"Previsão da região",324,449,244,38,func():weather_page(map_selection))
+	button(view,"Mapa regional",314,449,151,38,func():
+		regional_selection=Sectors.hub(map_selection)
+		regional_page())
+	button(view,"Previsão da região",603,449,246,38,func():weather_page(map_selection))
 	var shown=Saga.settings.get_value("game","trail",true)
-	button(view,"Trilha · "+("visível" if shown else "oculta"),603,448,247,39,func():
+	button(view,"Trilha · "+("visível" if shown else "oculta"),475,449,116,38,func():
 		Saga.settings.set_value("game","trail",not shown)
 		Saga.settings.save(Saga.SETTINGS)
 		game.world.trail.queue_redraw()
@@ -334,3 +358,43 @@ func map_details():
 	travel_btn.disabled=map_selection not in Saga.data.seen or not game.can_travel()
 	if not game.can_travel():map_text.text+="\nAproxime-se de um marco."
 
+
+
+func regional_page():
+	panel_page("regional","Cartografia / Mapa regional",Saga.regions[map_selection].place)
+	var map=RegionalMap.new()
+	map.realm=map_selection
+	map.selected=regional_selection
+	map.waypoint=game.map_waypoint()
+	if not game.world.interior:map.mission=Sectors.at(game.route_target())
+	map.location=Saga.origin(mini(game.region(),5))+Sectors.CROSSROAD if game.world.interior else game.hero.position
+	map.clip_contents=true
+	view.add_child(map)
+	rect(map,108,153,493,256)
+	var detail=label(view,"",622,154,221,94,19,PALE,true)
+	var route=button(view,"Marcar destino",620,261,228,42,func():
+		Saga.data.expedition.waypoint=Sectors.key(regional_selection)
+		Saga.data.rain_route=false
+		Saga.data.care_route=-1
+		Saga.save()
+		play(),true)
+	var travel=button(view,"Viajar ao marco",620,316,228,39,func():game.travel_to_sector(regional_selection))
+	var update=func(cell:Vector2i):
+		regional_selection=cell
+		var discovered=Saga.data.visited_sectors.has(Sectors.key(cell))
+		detail.text=Expedition.name_at(cell) if discovered else "Setor por explorar"
+		route.disabled=not discovered
+		travel.disabled=not game.can_travel() or not Saga.data.expedition.has("marker_"+Sectors.key(cell))
+	map.chosen.connect(update)
+	update.call(regional_selection)
+	button(view,"−",620,368,106,40,map.change_zoom.bind(-.25))
+	button(view,"+",742,368,106,40,map.change_zoom.bind(.25))
+	label(view,"● Você     ◆ Objetivo     ■ Serviço",109,411,490,29,14,MUTED)
+	button(view,"Mapa do mundo",108,449,168,38,map_page)
+	button(view,"Retomar",288,449,136,38,play,true)
+	if game.map_waypoint().x>=0:
+		button(view,"Remover destino",620,449,228,38,func():
+			Saga.data.expedition.erase("waypoint")
+			Saga.save()
+			regional_page())
+	focus_default()

@@ -1,15 +1,10 @@
 extends "res://scripts/ator.gd"
 
 const BEAST_PATH="res://personagens/bestiario/"
-const REGIONAL_BEASTS=[
-	["cogumelo","lobo","arqueiro"], ["rato","morcego","bruxa"],
-	["javali","serpente","cristal"], ["aranha","corvo","espectro"],
-	["trepadeira","lobo","fagulha"], ["vigia","cavaleiro","cultista"]]
-const CRYPT_BEASTS=["vigia","bruxa","pedra","espectro","ent","lava"]
-const GUARDIANS=["lobo","vazio","colosso","abissal","raiz","lava","dragao"]
-const GUARDIAN_NAMES=["Lobo do Junco","Arauto de Lume","Colosso de Ocre","Cavaleiro da Agulha","Ent da Nascente","Elemental de Basalto","Aster"]
+const Bestiary=preload("res://interfaces/bestiario.gd")
 static var beast_frames:Dictionary={}
 var species:String
+var encounter_noted=false
 var skin_scale=1.0
 var skin_height=0.0
 var game
@@ -41,22 +36,22 @@ func setup(g,k,c,pos:Vector2,is_boss:bool,id:String):
 	hp_max=(155 if k==3 else 40+c*10 if is_boss else 17+c*4)
 	hp=hp_max
 	shadow_size=[7,8,10,23][k]
-	species=pick_species()
+	species=Bestiary.species_for(tier,kind,quest_id,boss)
 	if boss and tier in [0,5]:skin_scale=1.35
 	make_actor(10+k,shadow_size*.65)
 	collision_layer=4
 	timer=.45+fmod(pos.x,.6)
 
-func pick_species()->String:
-	if boss:return GUARDIANS[tier]
-	if quest_id=="treino":return "pedra"
-	if quest_id.begins_with("cripta"):return CRYPT_BEASTS[tier]
-	if tier==0 and quest_id.ends_with("_2"):return "lodo"
-	if quest_id.begins_with("side"):return "cavaleiro" if tier==2 else "cristal"
-	return REGIONAL_BEASTS[tier][kind]
+func note_encounter():
+	if encounter_noted:return
+	encounter_noted=true
+	var key="selo%d"%tier if boss else species
+	if Bestiary.record(Saga.data,key):
+		Saga.save()
+		game.toast("Bestiário atualizado · "+Bestiary.title(key))
 
 func bestiary_name()->String:
-	return GUARDIAN_NAMES[tier]
+	return Bestiary.GUARDIAN_NAMES[tier]
 
 func portrait()->Texture2D:
 	return load(BEAST_PATH+"g%d.png"%tier)
@@ -102,6 +97,7 @@ func pose(state:String):
 func shielded():return kind==3 and fmod(dragon_clock,8.0)<4.8
 func hit(amount:int):
 	if dead:return
+	note_encounter()
 	if shielded():
 		game.effect(position,Color("#94d5ea"),23)
 		return
@@ -119,6 +115,8 @@ func _physics_process(dt):
 	if game.is_locked() or dead or not is_instance_valid(game.hero):return
 	var p=game.hero.position
 	var distance=position.distance_to(p)
+	if not encounter_noted and distance<138 and get_viewport_rect().has_point(get_global_transform_with_canvas().origin):
+		note_encounter()
 	if not boss and quest_id.begins_with("roam") and not game.world.interior:
 		var safe_spot=Saga.origin(game.region())+game.world.HOME+Vector2(0,40)
 		if p.distance_to(safe_spot)<53:

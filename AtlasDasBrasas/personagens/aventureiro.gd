@@ -153,12 +153,14 @@ func attack():
 		return
 	var w=int(Saga.data.weapon)
 	var reach=[32,33,45][w]
+	var reforged=w==0 and Saga.data.get("ember_sword",false)
+	if reforged:game.effect(position+facing*15,Color("#ffd087"),20)
 	facing=aim(reach+6)
 	combo=(combo%3)+1
 	combo_window=.88
 	for e in game.enemies.duplicate():
 		if is_instance_valid(e) and not e.dead and position.distance_to(e.position)<reach+e.shadow_size and facing.dot(position.direction_to(e.position))>-.18:
-			e.hit(Saga.power()+[1,6,2][w]+(7 if combo==3 else 0)+(4 if Saga.has_skill(1) else 0))
+			e.hit(Saga.power()+(3 if reforged else 0)+[1,6,2][w]+(7 if combo==3 else 0)+(4 if Saga.has_skill(1) else 0))
 	cooldown=[.29,.54,.38][w]
 	act("attack",.23)
 	game.sound("golpe")

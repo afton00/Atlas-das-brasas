@@ -5,8 +5,9 @@ signal notice(message: String)
 
 const SAVE = "user://atlas_v1.json"
 const SETTINGS = "user://preferencias.cfg"
-const REGIONS = [Vector2i(0,0),Vector2i(1,0),Vector2i(2,0),Vector2i(2,1),Vector2i(1,1),Vector2i(0,1)]
-const AREA = Vector2(768,512)
+const Bestiary=preload("res://interfaces/bestiario.gd")
+const Sectors=preload("res://mapas/setores.gd")
+const AREA = Vector2(Sectors.SIZE)
 const WEAPONS = ["Espada curta","Machado do cais","Lança da guarda"]
 const SKILLS = ["Passo leve","Lâmina dupla","Olho de falcão","Égide de vidro","Cura das raízes","Invocar lume"]
 const COSTS = [1,2,1,1,2,2]
@@ -48,7 +49,7 @@ func apply_audio():
 	AudioServer.set_bus_volume_db(0,linear_to_db(maxf(v,0.0001)))
 
 func reset():
-	data={"chapter":0,"stage":0,"briefed":false,"taught":-1,"xp":0,"hp":100.0,"mp":60.0,"style":0,"weapon":0,"armor":false,"magic":"lume","charm":"","points":1,"learned":[],"review":{},"choices":{},"bonds":{},"seen":[0],"side":{},"chests":[],"herbs":2,"ore":2,"potions":2,"skills":[],"weapons":[0],"letter":"","won":false,"pos":[324,265],"room":"hall","ruins":{},"relics":[],"inside":false,"interior":0,"kills":[],"saved_at":"","care_records":{},"care_route":-1,"world_minutes":1815.0,"rain_day":-1,"rain_readings":{},"rain_recipient":-1,"rain_route":false}
+	data={"chapter":0,"stage":0,"briefed":false,"taught":-1,"xp":0,"hp":100.0,"mp":60.0,"style":0,"weapon":0,"armor":false,"magic":"lume","charm":"","points":1,"learned":[],"review":{},"choices":{},"bonds":{},"seen":[0],"side":{},"chests":[],"herbs":2,"ore":2,"potions":2,"skills":[],"weapons":[0],"letter":"","won":false,"pos":[1092,777],"world_schema":Sectors.VERSION,"visited_sectors":{},"discoveries":{},"expedition":{},"landmark":-1,"voyages":{},"room":"hall","ruins":{},"relics":[],"inside":false,"interior":0,"kills":[],"saved_at":"","care_records":{},"care_route":-1,"world_minutes":1815.0,"rain_day":-1,"rain_readings":{},"rain_recipient":-1,"rain_route":false}
 
 func level() -> int: return 1 + int(float(data.xp)/100)
 func max_hp() -> float: return 94.0 + level()*6.0 + (18 if data.armor else 0)
@@ -61,8 +62,8 @@ func current_lesson():
 	var arr=chapter_lessons(data.chapter)
 	return arr[data.stage] if data.stage<arr.size() else {}
 func region_at(pos: Vector2) -> int:
-	return REGIONS.find(Vector2i(clampi(floori(pos.x/AREA.x),0,2),clampi(floori(pos.y/AREA.y),0,1)))
-func origin(c:int) -> Vector2: return Vector2(REGIONS[c])*AREA
+	return maxi(0,Sectors.realm_at(Sectors.at(pos)))
+func origin(c:int) -> Vector2: return Sectors.origin(Sectors.hub(c))
 func award(xp:int):
 	var before=level()
 	data.xp+=xp
@@ -131,9 +132,12 @@ func restore() -> bool:
 	for path in [SAVE,SAVE+".bak"]:
 		if not FileAccess.file_exists(path): continue
 		var v=JSON.parse_string(FileAccess.get_file_as_string(path))
-		if v is Dictionary and v.has("chapter") and v.has("pos") and int(v.chapter) in range(7):
+		if v is Dictionary and v.has("chapter") and v.get("pos") is Array and v.pos.size()==2 and int(v.chapter) in range(7):
 			reset()
 			data.merge(v,true)
+			Sectors.migrate(data,int(v.get("world_schema",1)))
+			data.world_schema=Sectors.VERSION
+			Bestiary.migrate(data)
 			for k in ["chapter","stage","taught","interior","style","weapon","points","xp","ore","herbs","potions"]: data[k]=int(data[k])
 			for k in ["skills","weapons","seen"]:
 				for i in data[k].size(): data[k][i]=int(data[k][i])

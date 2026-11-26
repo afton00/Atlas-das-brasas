@@ -18,10 +18,14 @@ func click(prefix:String):
 
 func walk_to(pos):
 	g.hero.position=pos
+	if not g.world.interior:g.world.stream(pos)
 	Saga.data.pos=[pos.x,pos.y]
 
 func talk(c):
-	var n=g.world.mentors[c] if not g.world.interior else g.world.mentors[0]
+	if not g.world.interior:walk_to(Saga.origin(c)+Vector2(365,268))
+	var n=g.world.mentors[0]
+	for actor in g.world.mentors:
+		if actor.c==c:n=actor;break
 	walk_to(n.position+Vector2(0,4))
 	g.interact()
 
@@ -35,7 +39,7 @@ func _ready():
 	call_deferred("run")
 
 func check_crypt():
-	walk_to(g.world.CRYPT+Vector2(0,4))
+	walk_to((Saga.origin(0)+g.world.CRYPT)+Vector2(0,4))
 	g.interact()
 	click("Examinar o templo")
 	check(g.world.room_type=="crypt" and g.world.interior,"Entrada no templo")
@@ -74,17 +78,17 @@ func check_crypt():
 	check("0" in Saga.data.relics,"Relicário aberto")
 	walk_to(Vector2(256,292))
 	g.interact()
-	check(not g.world.interior and g.hero.position.distance_to(g.world.CRYPT)<27,"Retorno pela saída do templo")
+	check(not g.world.interior and g.hero.position.distance_to((Saga.origin(0)+g.world.CRYPT))<27,"Retorno pela saída do templo")
 
 func check_guidance():
 	var trail=g.world.trail
-	trail.follow(Vector2(440,264),Vector2(596,264))
+	trail.follow(Saga.origin(0)+Vector2(440,264),Saga.origin(0)+Vector2(596,264))
 	check(trail.available,"Rota até a margem oposta")
 	var crossing=false
 	var clear_route=true
 	for cell in trail.steps:
 		var tile=g.world.terrain.get_cell_atlas_coords(cell)
-		if tile.x in [11,12] and cell.y in [8,9,23,24]:crossing=true
+		if tile.x in [11,12] and cell.y-int(Saga.origin(0).y/16) in [8,9,23,24]:crossing=true
 		if tile.x in [8,9,10,16]:clear_route=false
 	check(crossing and clear_route,"Trilha usa uma ponte transitável")
 	var controls=preload("res://interfaces/toque.gd").new()
@@ -164,7 +168,7 @@ func check_weather():
 	check(Saga.data.world_minutes==before,"Leitura do boletim pausa o relógio")
 	click("Aguardar o amanhecer")
 	check(Saga.data.world_minutes>before and weather.clock_text(Saga.data.world_minutes)=="06:00","Pouso no interior avança até o amanhecer")
-	g.build(false,0,g.world.WEATHER_BOARD+Vector2.DOWN*8)
+	g.build(false,0,Saga.origin(0)+g.world.WEATHER_BOARD+Vector2.DOWN*8)
 	g.ui.play()
 	before=Saga.data.world_minutes
 	g._process(1.0)
@@ -172,7 +176,7 @@ func check_weather():
 	g.interact()
 	click("Ler o pedido")
 	click("Assumir a entrega")
-	check(Saga.data.rain_route and g.route_target()==g.world.GAUGES[0],"Missão inicia no quadro e aponta para o viveiro")
+	check(Saga.data.rain_route and g.route_target()==Saga.origin(0)+g.world.GAUGES[0],"Missão inicia no quadro e aponta para o viveiro")
 	var day_of_record=int(Saga.data.rain_day)
 	for c in [1,0]:
 		if c==0:
@@ -188,8 +192,8 @@ func check_weather():
 		check(g.ui.mode=="gauge","Leitura presencial do instrumento")
 		click("Anotar a leitura")
 		check(int(Saga.data.rain_readings[str(c)])==weather.daily_rain(c,day_of_record),"Registro do período fixado")
-	check(g.route_target()==g.world.WATER_CART,"As leituras apontam para a carroça")
-	walk_to(g.world.WATER_CART+Vector2.DOWN*9)
+	check(g.route_target()==Saga.origin(0)+g.world.WATER_CART,"As leituras apontam para a carroça")
+	walk_to(Saga.origin(0)+g.world.WATER_CART+Vector2.DOWN*9)
 	g.interact()
 	var dry=0 if int(Saga.data.rain_readings["0"])<int(Saga.data.rain_readings["1"]) else 1
 	var xp=Saga.data.xp
@@ -198,6 +202,10 @@ func check_weather():
 	click("Enviar a "+g.ui.LOG_NAMES[dry])
 	check(int(Saga.data.rain_recipient)==dry and Saga.data.xp==xp+60 and not Saga.data.rain_route,"Carroça abastece o viveiro escolhido")
 	var grown=0
+	for plant in g.world.nursery_plants:
+		if plant.visible and Saga.region_at(plant.position)==dry:grown+=1
+	walk_to(Saga.origin(dry)+g.world.GAUGES[dry]+Vector2.DOWN*8)
+	grown=0
 	for plant in g.world.nursery_plants:
 		if plant.visible and Saga.region_at(plant.position)==dry:grown+=1
 	check(grown==3,"O resultado da rega aparece no cenário")
@@ -209,20 +217,119 @@ func check_weather():
 	click("Previsão da região")
 	check(g.ui.mode=="weather","Previsão acessível pelo mapa")
 
+func check_expansion():
+	var sectors=preload("res://mapas/setores.gd")
+	var field=preload("res://mapas/expedicao.gd")
+	var frontier=preload("res://mapas/fronteiras.gd")
+	check(sectors.bounds().size==Vector2(9216,4096),"Escala do novo mundo")
+	check(sectors.route(sectors.hub(0),sectors.hub(1)).size()==5,"Rede de setores liga Junco a Lume")
+	var legacy={"inside":false,"pos":[798.5,180.0],"chapter":2}
+	sectors.migrate(legacy,1)
+	check(Vector2(legacy.pos[0],legacy.pos[1])==Saga.origin(1)+Vector2(30.5,180.0) and legacy.chapter==2,"Migração preserva posição local e capítulo")
+	var old_inside={"inside":true,"pos":[215,252]}
+	sectors.migrate(old_inside,1)
+	check(old_inside.pos==[215,252],"Migração conserva coordenadas de interiores")
+	g.build(false,0,Saga.origin(0)+sectors.CROSSROAD)
+	g.ui.play()
+	var start_hero=g.hero
+	var destination=Saga.origin(1)+sectors.CROSSROAD
+	var visited=[]
+	for step in 3700:
+		g.world.trail.follow(g.hero.position,destination)
+		var cell=g.world.current_sector
+		if cell not in visited:visited.append(cell)
+		if g.hero.position.distance_to(destination)<18:break
+		var heading:Vector2=g.hero.position.direction_to(g.world.trail.next_point)
+		for direction in [["left",-heading.x],["right",heading.x],["up",-heading.y],["down",heading.y]]:
+			if direction[1]>.13:Input.action_press(direction[0],direction[1])
+			else:Input.action_release(direction[0])
+		await get_tree().physics_frame
+	for direction in ["left","right","up","down"]:Input.action_release(direction)
+	check(g.region()==1 and g.hero.position.distance_to(destination)<18 and g.hero==start_hero,"Viagem física Junco–Lume com o mesmo aventureiro")
+	check(visited.size()>=5 and g.world.loaded.size()<=9 and not g.world.loaded.has(sectors.hub(0)),"Streaming descarta a vila distante após a viagem")
+	check(Saga.data.discoveries.has("porto") and Saga.data.discoveries.has("entreposto"),"Descobertas do trajeto")
+	g.ui.open_map()
+	click("Mapa regional")
+	check(g.ui.mode=="regional","Mapa regional aberto pela cartografia")
+	g.ui.play()
+	var cave_cell=Vector2i(2,3)
+	walk_to(sectors.origin(cave_cell)+field.LODGE+Vector2.DOWN*12)
+	g.interact()
+	check(g.world.room_type=="field_cave" and g.enemies.size()==1,"Gruta opcional e guardião")
+	g.return_title()
+	g.continue_game()
+	check(g.world.room_type=="field_cave" and field.return_cell()==cave_cell,"Salvamento no interior novo")
+	if g.enemies.size()==1:g.enemies[0].hit(500)
+	walk_to(Vector2(417,106))
+	g.interact()
+	check(Saga.data.expedition.get("relic_2,3",false),"Relíquia da gruta após o guardião")
+	walk_to(field.LODGE_EXIT)
+	g.interact()
+	check(not g.world.interior and sectors.at(g.hero.position)==cave_cell,"Saída retoma o setor de entrada")
+	var bridge_cell=Vector2i(3,1)
+	walk_to(sectors.origin(bridge_cell)+Vector2(425,274))
+	g.interact()
+	check(g.ui.mode=="bridge","Problema de tábuas na rota")
+	click("Aplicar a medida")
+	check(not Saga.data.expedition.has("bridge"),"Medida errada conserva a passarela fechada")
+	for control in g.ui.view.get_children():
+		if control is SpinBox:control.value=12
+	click("Aplicar a medida")
+	var bridge=bridge_cell*Vector2i(48,32)+field.BRIDGE_CELL
+	check(Saga.data.expedition.get("bridge",false) and g.world.terrain.get_cell_atlas_coords(bridge).x==12,"A resposta altera a colisão da ponte")
+	g.return_title()
+	g.continue_game()
+	check(sectors.at(g.hero.position)==bridge_cell and g.world.terrain.get_cell_atlas_coords(bridge).x==12,"Posição e ponte restauradas no setor expandido")
+	for i in 3:
+		walk_to(Saga.origin(frontier.ORIGINS[i])+frontier.GATES[i]+Vector2.DOWN*8)
+		g.interact()
+		click("Iniciar travessia")
+		check(g.world.room_type==frontier.room_for(i),"Fronteira acessível · "+frontier.NAMES[i])
+		walk_to(frontier.POSITIONS[i][0]+Vector2.DOWN*8)
+		g.interact()
+		click("Anotar a pista")
+		walk_to(frontier.POSITIONS[i][1]+Vector2.DOWN*8)
+		g.interact()
+		click(["Nordeste","11 segundos","Leste"][i])
+		check(frontier.stage(i)==2,"Mecanismo da fronteira · "+frontier.NAMES[i])
+		walk_to(frontier.POSITIONS[i][2]+Vector2.DOWN*8)
+		g.interact()
+		click("Guardar a carta")
+		check(frontier.stage(i)==3,"Carta registrada · "+frontier.NAMES[i])
+		if i==0:
+			walk_to(frontier.EAST_PIER+Vector2.DOWN*8)
+			g.interact()
+		walk_to(frontier.EXIT+Vector2.DOWN*6)
+		g.interact()
+		check(not g.world.interior,"Retorno da fronteira")
+	walk_to(Saga.origin(0)+g.world.Obra.POSITION+Vector2.DOWN*8)
+	Saga.data.ore=maxi(12,int(Saga.data.ore))
+	g.interact()
+	click("Erguer abrigo")
+	g.interact()
+	click("Ampliar")
+	g.interact()
+	click("Reforjar espada")
+	click("Reforjar por")
+	check(g.world.Obra.level()==2 and Saga.data.get("ember_sword",false),"Oficina e reforja a partir do cenário")
+	g.ui.pause_page()
+	click("Bestiário")
+	check(g.ui.mode=="bestiario" and Saga.data.fauna.size()>0,"Bestiário registra encontros e fica acessível")
+
 func run():
 	await get_tree().process_frame
 	check(g.ui.mode=="menu","Menu inicial")
 	click("Iniciar jornada")
 	click("Descer até a margem")
 	click("Voltar à aventura")
-	check(g.enemies.size()==20,"População regional")
+	check(g.enemies.size()<15 and g.world.loaded.size()==9,"Somente setores próximos ativos")
 	check_guidance()
 	var start=g.hero.position
 	Input.action_press("right")
 	for i in 12:await get_tree().physics_frame
 	Input.action_release("right")
 	check(g.hero.position.x>start.x+8,"Movimento com entrada física")
-	walk_to(g.world.HOME+Vector2(0,10))
+	walk_to(Saga.origin(0)+g.world.HOME+Vector2(0,10))
 	g.interact()
 	check(g.world.interior and g.region()==0,"Entrada na oficina")
 	walk_to(Vector2(255,290))
@@ -232,10 +339,10 @@ func run():
 	var menu_label=g.ui.label(g.ui.hud,"Texto curto",10,10,200,24,14)
 	check(menu_label.size.y<=25,"Altura do texto após quebra automática")
 	menu_label.queue_free()
-	var bridge=Vector2i(g.world.channel_x(0,16)+1,16)
+	var bridge=Vector2i(Saga.origin(0)/16)+Vector2i(g.world.channel_x(0,16)+1,16)
 	check(g.world.terrain.get_cell_atlas_coords(bridge).x==8,"Travessia principal fechada no início")
 	check(not g.can_travel(),"Restrições de deslocamento antes da aliança")
-	walk_to(g.world.ARCH+Vector2(0,5))
+	walk_to(Saga.origin(0)+g.world.ARCH+Vector2(0,5))
 	check(g.can_travel(),"Viagem liberada no marco")
 	var citizen=g.world.residents[0]
 	walk_to(citizen.position+Vector2(0,4))
@@ -360,6 +467,7 @@ func run():
 	check(Saga.data.letter!="","Texto autoral persistido")
 	check_care_rounds()
 	check_weather()
+	await check_expansion()
 	print("ATLAS: %d verificações; %d falhas."%[checks,failures.size()])
 	get_tree().quit(0 if failures.is_empty() else 1)
 
