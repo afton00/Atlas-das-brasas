@@ -14,29 +14,59 @@ var corridor:Array[Vector2i]=[]
 var start_sector:=Vector2i(-1,-1)
 var finish_sector:=Vector2i(-1,-1)
 
-func rebuild(world):
-	exterior=not world.interior
-	grid.region=world.terrain.get_used_rect()
+func configure_grid(rect:Rect2i):
+	grid.region=rect
 	grid.cell_size=Vector2(16,16)
 	grid.offset=Vector2(8,8)
 	grid.diagonal_mode=AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	grid.update()
-	grid.fill_solid_region(grid.region,true)
-	for cell in world.terrain.get_used_cells():
-		var tile=world.terrain.get_cell_tile_data(cell)
-		grid.set_point_solid(cell,tile.get_collision_polygons_count(0)>0)
-	for obj in world.objects.get_children():
-		if obj is Place and obj.solid:
-			var size_body=Vector2(obj.shadow_size*1.45,7)
-			var footprint=Rect2(obj.position-Vector2(0,4)-size_body/2,size_body).grow(5)
-			for y in range(floori(footprint.position.y/16),floori(footprint.end.y/16)+1):
-				for x in range(floori(footprint.position.x/16),floori(footprint.end.x/16)+1):
-					var at=Vector2i(x,y)
-					if grid.is_in_boundsv(at) and footprint.has_point(center(at)):grid.set_point_solid(at)
+	grid.fill_solid_region(rect,true)
+
+func reset_path():
 	steps.clear()
 	available=false
 	target_cell=Vector2i(-1,-1)
 	last_cell=Vector2i(-1,-1)
+
+func block_footprints(nodes:Array):
+	for obj in nodes:
+		if not is_instance_valid(obj) or not obj is Place or not obj.solid:continue
+		var size_body=Vector2(obj.shadow_size*1.45,7)
+		var footprint=Rect2(obj.position-Vector2(0,4)-size_body/2,size_body).grow(5)
+		for y in range(floori(footprint.position.y/16),floori(footprint.end.y/16)+1):
+			for x in range(floori(footprint.position.x/16),floori(footprint.end.x/16)+1):
+				var at=Vector2i(x,y)
+				if grid.is_in_boundsv(at) and footprint.has_point(center(at)):grid.set_point_solid(at)
+
+func start_exterior():
+	exterior=true
+	var world_rect=Sectors.bounds()
+	configure_grid(Rect2i(Vector2i(world_rect.position/16),Vector2i(world_rect.size/16)))
+
+func sync_sector(world,cell:Vector2i):
+	var rect=Rect2i(cell*Vector2i(48,32),Vector2i(48,32))
+	if world.loaded.has(cell):
+		for y in range(rect.position.y,rect.end.y):
+			for x in range(rect.position.x,rect.end.x):
+				var p=Vector2i(x,y)
+				var tile=world.terrain.get_cell_tile_data(p)
+				grid.set_point_solid(p,tile==null or tile.get_collision_polygons_count(0)>0)
+		block_footprints(world.loaded[cell].nodes)
+	else:
+		grid.fill_solid_region(rect,true)
+	reset_path()
+
+func rebuild(world):
+	exterior=not world.interior
+	if exterior:
+		start_exterior()
+		for cell in world.loaded:sync_sector(world,cell)
+	else:
+		configure_grid(world.terrain.get_used_rect())
+		for p in world.terrain.get_used_cells():
+			grid.set_point_solid(p,world.terrain.get_cell_tile_data(p).get_collision_polygons_count(0)>0)
+		block_footprints(world.objects.get_children())
+		reset_path()
 
 func center(cell:Vector2i)->Vector2:return Vector2(cell)*16+Vector2(8,8)
 
@@ -53,6 +83,27 @@ func open_cell(pos:Vector2)->Vector2i:
 				best=candidate
 				distance=d
 	return best
+
+# Historical outdoor saves may now fall inside a bank, a tree or a new building.
+func can_stand(pos:Vector2)->bool:
+	for offset in [Vector2.ZERO,Vector2(-5,-5),Vector2(5,-5),Vector2(-5,5),Vector2(5,5)]:
+		var p=Vector2i(((pos+offset)/16).floor())
+		if not grid.is_in_boundsv(p) or grid.is_point_solid(p):return false
+	return true
+
+func resume_position(pos:Vector2)->Vector2:
+	if can_stand(pos):return pos
+	var base=Sectors.origin(Sectors.at(pos))
+	var cross=open_cell(base+Sectors.CROSSROAD)
+	var first=Vector2i((pos/16).floor())
+	for radius in range(1,49):
+		for y in range(-radius,radius+1):
+			for x in range(-radius,radius+1):
+				if maxi(absi(x),absi(y))!=radius:continue
+				var p=first+Vector2i(x,y)
+				var candidate=center(p)
+				if Sectors.at(candidate)==Sectors.at(pos) and can_stand(candidate) and not grid.get_id_path(cross,p).is_empty():return candidate
+	return center(cross)
 
 func follow(pos:Vector2,dest:Vector2):
 	if exterior:

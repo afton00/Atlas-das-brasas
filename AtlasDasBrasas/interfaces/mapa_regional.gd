@@ -62,7 +62,20 @@ func _draw():
 				draw_line(Vector2(pos.x,cross.y),Vector2(pos.x+tile.x,cross.y),Color("#dbc594"),1.5)
 				draw_line(Vector2(cross.x,pos.y),Vector2(cross.x,pos.y+tile.y),Color("#dbc594"),1.5)
 				var area=Expedition.entry(cell)
-				if not area.is_empty() and area[1]=="water":
+				if area.size()>5:
+					var form=area[5]
+					match form:
+						"pool","oasis","marsh":
+							draw_circle(pos+tile*Vector2(.73,.22),minf(tile.x,tile.y)*.095,Color("#65a9c3"))
+						"lava","rift":
+							var water=Color("#ee945f") if form=="lava" else Color("#7497a8")
+							draw_polyline(PackedVector2Array([pos+tile*Vector2(.7,.02),pos+tile*Vector2(.77,.38),pos+tile*Vector2(.69,.7),pos+tile*Vector2(.74,.97)]),water,2.5)
+						"ridge","terrace":
+							draw_polyline(PackedVector2Array([pos+tile*Vector2(.11,.31),pos+tile*Vector2(.17,.14),pos+tile*Vector2(.24,.31),pos+tile*Vector2(.28,.21)]),Color("#b9b8a2"),2)
+					if area[1] in ["ruin","cave"]:
+						var mark=pos+tile*Vector2(.75,.76)
+						draw_colored_polygon(PackedVector2Array([mark+Vector2(-4,3),mark+Vector2(0,-4),mark+Vector2(4,3)]),Color("#d9ceb2"))
+				elif not area.is_empty() and area[1]=="water":
 					draw_line(pos+Vector2(tile.x*.62,0),pos+Vector2(tile.x*.62,tile.y),Color("#65a9c3"),3)
 				var marker=Saga.data.expedition.has("marker_"+Sectors.key(cell)) or cell==Sectors.hub(realm)
 				draw_circle(cross,4 if marker else 2.75,gold if marker else Color("#a5dfb9"))

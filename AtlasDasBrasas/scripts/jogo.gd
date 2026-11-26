@@ -73,6 +73,12 @@ func continue_game():
 	last_region=-1
 	gather_clock.clear()
 	build(Saga.data.inside,Saga.data.interior,Vector2(Saga.data.pos[0],Saga.data.pos[1]),Saga.data.room)
+	if not world.interior and Expedition.Lands.AREAS.has(Sectors.key(world.current_sector)):
+		var safe=world.trail.resume_position(hero.position)
+		if not safe.is_equal_approx(hero.position):
+			hero.position=safe
+			Saga.data.pos=[safe.x,safe.y]
+			Saga.save()
 	ui.play()
 
 func build(inside:bool,c:int,pos:Vector2,room:String="hall"):
@@ -91,7 +97,15 @@ func build(inside:bool,c:int,pos:Vector2,room:String="hall"):
 	Saga.data.pos=[pos.x,pos.y]
 	if inside and room=="field_cave":
 		var id="deep_"+Sectors.key(Expedition.return_cell())
-		if id not in Saga.data.kills:spawn(0,c,Vector2(401,145),false,id)
+		if id not in Saga.data.kills:spawn([0,0,2,2,2,2][c],c,Vector2(401,145),false,id)
+	elif inside and room=="field_chamber":
+		var i=Expedition.Chambers.index_for(Expedition.entry(Expedition.return_cell()))
+		if i>=0:
+			var id="custodia_"+Expedition.Chambers.KEYS[i]
+			if id not in Saga.data.kills:
+				var sentinel=spawn([0,1,0,2][i],c,Vector2(309,141),false,id)
+				sentinel.hp_max*=3
+				sentinel.hp=sentinel.hp_max
 	elif inside and c==6 and not Saga.data.won:spawn(3,6,Vector2(250,109),true,"dragon")
 	elif inside and room=="crypt" and "cripta"+str(c) not in Saga.data.kills:
 		spawn(2,c,Vector2(410,201),false,"cripta"+str(c))
@@ -258,7 +272,9 @@ func route_target()->Vector2:
 		if world.interior:return Vector2(256,291)
 		return Saga.origin(care)+World.CARE_POINTS[care]
 	var marker=map_waypoint()
-	if not world.interior and marker.x>=0:return Sectors.origin(marker)+Sectors.CROSSROAD
+	if not world.interior and marker.x>=0:
+		var point=Expedition.Studies.DESK if Saga.data.expedition.get("field_track","")==Sectors.key(marker) else Sectors.CROSSROAD
+		return Sectors.origin(marker)+point
 	var c=int(Saga.data.chapter)
 	if world.room_type=="crypt":
 		var st=int(Saga.data.ruins.get(str(world.region),0))
@@ -289,6 +305,7 @@ func _process(dt):
 	if not world.interior:
 		var before=world.current_sector
 		world.stream(hero.position,false)
+		world.update_caravans(Weather.day(Saga.data.world_minutes))
 		if before!=world.current_sector and not Expedition.entry(world.current_sector).is_empty():
 			toast(Expedition.name_at(world.current_sector))
 	var c=region()

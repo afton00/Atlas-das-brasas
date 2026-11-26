@@ -10,13 +10,16 @@ var path:Array[Vector2i]=[]
 var timer=0.0
 var waypoint:=Vector2.ZERO
 var schedule:=-1
+var workplace=""
+var sheltered=false
 
-func setup(owner_game,c:int,sector_origin:Vector2,settlement:String):
+func setup(owner_game,c:int,sector_origin:Vector2,settlement:String,work:String=""):
 	game=owner_game
 	realm=c
 	base=sector_origin
-	position=base+Vector2(287,280)
-	label="Morador · "+settlement
+	workplace=work
+	position=base+(Vector2(176,264) if work!="" else Vector2(287,280))
+	label="Morador · "+settlement if work=="" else "Responsável · "+work
 	make_actor(16+c,5)
 
 func _physics_process(delta:float):
@@ -28,10 +31,13 @@ func _physics_process(delta:float):
 		var minutes=float(Saga.data.world_minutes)
 		var slot=Weather.period(minutes)
 		var sky=Weather.sky(realm,Weather.day(minutes),slot)
-		var activity=2 if slot in [0,3] or sky in [2,3,5] else slot-1
+		sheltered=sky in [2,3,5]
+		var activity=2 if slot in [0,3] or sheltered else slot-1
 		if activity!=schedule or position.distance_to(waypoint)>5 and velocity.is_zero_approx():
 			schedule=activity
 			waypoint=base+[Vector2(264,264),Vector2(341,298),Vector2(422,281)][activity]
+			if workplace!="":
+				waypoint=base+[Vector2(159,263),Vector2(354,298),Vector2(408,281)][activity]
 			var nav=game.world.trail
 			var start=nav.open_cell(position)
 			var goal=nav.open_cell(waypoint)
@@ -49,3 +55,14 @@ func _physics_process(delta:float):
 		velocity=facing*21
 		move_and_slide()
 		pose("walk")
+
+
+func conversation()->String:
+	if sheltered:return "Vou esperar o tempo melhorar na pousada. A estrada fica mais difícil de ler quando as marcas no chão se apagam."
+	if schedule==2:return "O mercado já recolheu as bancas. Vou descansar antes da próxima viagem."
+	if schedule==1:
+		for neighbor in game.world.sites:
+			if neighbor!=self and neighbor.get("tag")=="field_neighbor" and position.distance_to(neighbor.position)<34:
+				return "Estávamos trocando notícias sobre a estrada. O quadro na encruzilhada indica os próximos povoados."
+	if workplace!="":return "Hoje fico em "+workplace+". A porta está aberta para quem quiser consultar a bancada."
+	return ""

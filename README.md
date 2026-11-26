@@ -37,6 +37,8 @@ As fases 1 a 3 incluem a arquitetura de setores, a expansão de Junco e a rota t
 
 Os arredores de Junco incluem três povoados, a Fazenda das Colinas, as florestas, o Moinho Abandonado, o acampamento de caçadores e a Gruta do Veado. A cartografia inclui minimapa, zoom, regiões com áreas por descobrir e marcos de viagem. Os moradores dos povoados mudam de destino com o tempo. A cooperativa também mantém a oficina comunitária de Junco, com abrigo, fabricação em lote e evolução da espada curta.
 
-Lume recebe o corredor e os primeiros arredores acadêmicos. Ocre, Agulha, Nascente e Basalto têm centros originais e setores transitáveis. O povoamento próprio dos novos setores desses territórios é trabalho das fases seguintes. As primeiras expedições do Arquipélago de Íris, das Terras Corrompidas e da Sétima Margem estão incluídas em mapas opcionais separados.
+Lume abriga a Grande Biblioteca, a Academia e os arquivos subterrâneos. Além das seis sedes de campanha, os 90 setores externos têm nomes e placas com indicações de viagem. Há doze casas de ofício com interiores, incluindo boticas, bibliotecas e oficinas. Nas paradas da caravana, o quadro anuncia o pouso do dia. Os comerciantes aceitam trocas e confiam cartas aos viajantes.
 
-O teste de integração percorre a campanha, as rondas e a missão dos viveiros. Ele também dirige o aventureiro a pé de Junco até Lume, restaura salvamentos, testa a ponte e conclui as expedições de fronteira.
+Em **Diário → Trabalhos de campo**, consulte os registros dos quatro reinos. A primeira investigação passa pelo Oásis da Argila e pelo Oásis das Tamareiras antes de chegar ao Arquivo dos Canais. Outras viagens levam à passarela da Agulha, às margens da Nascente e à Fortaleza do Ferrolho. Ler as marcas em certas galerias pode revelar câmaras com testemunhas e relíquias.
+
+A suíte de integração percorre a campanha até Aster, as rondas e a missão dos viveiros. Ela verifica os serviços dos setores, dirige o aventureiro entre os reinos, resolve os trabalhos de campo, entrega as cartas da caravana e restaura salvamentos dentro das galerias.

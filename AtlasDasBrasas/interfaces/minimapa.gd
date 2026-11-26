@@ -16,10 +16,12 @@ func _draw():
 			var t=tiles.get_cell_atlas_coords(cell).x
 			if t<0:continue
 			var color=Color("#3f6954")
-			if t in [8,9,10]:color=Color("#467c98")
+			if tiles.get_cell_source_id(cell)==2:color=Color("#f09c5b")
+			elif t in [8,9,10]:color=Color("#467c98")
 			elif t in [11,12] or t in range(4,8) or t>=18:color=Color("#9b8965")
 			draw_rect(Rect2(ext+Vector2(x,y)*zoom,Vector2.ONE*zoom),color)
 	for node in game.world.sites:
+		if not node.visible:continue
 		var delta=(node.position-here)*(zoom/16.0)
 		if absf(delta.x)>ext.x-5 or absf(delta.y)>ext.y-5:continue
 		draw_circle(ext+delta,1.85,Color("#ffe0a6") if node.get("active")==true else Color("#9ec5b6"))

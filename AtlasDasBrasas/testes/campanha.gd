@@ -316,6 +316,213 @@ func check_expansion():
 	click("Bestiário")
 	check(g.ui.mode=="bestiario" and Saga.data.fauna.size()>0,"Bestiário registra encontros e fica acessível")
 
+func cross_open_border(first:Vector2i,last:Vector2i):
+	var sectors=g.world.Sectors
+	var dest=sectors.origin(last)+sectors.CROSSROAD
+	var start=sectors.origin(first)+sectors.CROSSROAD
+	g.build(false,sectors.realm_at(first),start)
+	g.ui.play()
+	var traveler=g.hero
+	for tick in 1600:
+		g.world.trail.follow(g.hero.position,dest)
+		if g.hero.position.distance_to(dest)<16:break
+		var dir=g.hero.position.direction_to(g.world.trail.next_point)
+		for motion in [["left",-dir.x],["right",dir.x],["up",-dir.y],["down",dir.y]]:
+			if motion[1]>.13:Input.action_press(motion[0],motion[1])
+			else:Input.action_release(motion[0])
+		await get_tree().physics_frame
+	for action in ["left","right","up","down"]:Input.action_release(action)
+	check(g.hero==traveler and sectors.at(g.hero.position)==last and g.hero.position.distance_to(dest)<16,"Travessia a pé entre "+str(first)+" e "+str(last))
+
+func check_territories():
+	var sectors=g.world.Sectors
+	var field=g.world.Expedition
+	var studies=field.Studies
+	var names={}
+	var edges=[Vector2(8,264),Vector2(760,264),Vector2(328,8),Vector2(328,504)]
+	var worst_nodes=0
+	for y in 8:
+		# A serpentine tour exercises unloading at both ends of the world.
+		for idx in 12:
+			var cell=Vector2i(idx if y%2==0 else 11-idx,y)
+			var realm=sectors.realm_at(cell)
+			var area=field.entry(cell)
+			if cell==sectors.hub(realm):continue
+			check(not area.is_empty() and not names.has(area[2]),"Identidade do setor · "+str(cell))
+			names[area[2]]=true
+			var base=sectors.origin(cell)
+			walk_to(base+sectors.CROSSROAD)
+			var nav=g.world.trail
+			var start=nav.open_cell(base+sectors.CROSSROAD)
+			var reachable=true
+			for edge in edges:
+				if nav.grid.get_id_path(start,nav.open_cell(base+edge)).is_empty():reachable=false
+			check(reachable,"Estradas ligadas às quatro saídas · "+area[0])
+			var services=true
+			for site in g.world.sites:
+				if sectors.at(site.position)!=cell or not site.visible:continue
+				var goal=nav.open_cell(site.position+Vector2.DOWN*12)
+				if goal.x<0 or nav.grid.get_id_path(start,goal).is_empty() or nav.center(goal).distance_to(site.position)>38:services=false
+			check(services and Saga.data.discoveries.has(area[2]),"Acesso aos serviços e descoberta · "+area[0])
+			check(g.world.loaded.size()<=9 and g.enemies.size()<=16,"Carga limitada · "+area[0])
+			worst_nodes=maxi(worst_nodes,g.world.objects.get_child_count())
+			g.world.stream(g.hero.position,false)
+		await get_tree().process_frame
+	check(names.size()==90,"Noventa setores externos e seis sedes")
+	print("Pico no percurso dos setores: ",worst_nodes," objetos de primeiro nível.")
+	for realm in range(2,6):
+		var case=studies.CASES[realm-2]
+		var base=sectors.origin(case.cells[2])
+		walk_to(base+studies.DESK+Vector2.DOWN*8)
+		g.interact()
+		click("Guardar indicação")
+		g.ui.journal()
+		click("Trabalhos de campo")
+		click(["Ocre","Agulha","Nascente","Basalto"][realm-2])
+		click("Guiar até o posto")
+		check(g.route_target()==sectors.origin(case.cells[0])+studies.DESK,"Guia ao primeiro registro · "+case.title)
+		for slot in [1,0]:
+			walk_to(sectors.origin(case.cells[slot])+studies.DESK+Vector2.DOWN*8)
+			g.interact()
+			click("Anotar no diário")
+			check(studies.noted(realm,slot),"Registro de campo · "+case.sites[slot])
+		g.return_title()
+		g.continue_game()
+		check(studies.noted(realm,0) and studies.noted(realm,1),"Registros restaurados · "+case.title)
+		check(g.route_target()==base+studies.DESK,"Guia avança até o posto de aplicação")
+		walk_to(base+studies.DESK+Vector2.DOWN*8)
+		g.interact()
+		check(g.ui.mode=="field_work","Bancada da expedição · "+case.title)
+		match realm:
+			2,4:click(case.choices[1-case.correct])
+			3:click("Registrar cota")
+			5:click("Testar comando")
+		check(not studies.solved(realm) and g.ui.mode=="field_work","Erro permite corrigir · "+case.title)
+		var showed_hint=false
+		for item in g.ui.view.get_children():
+			if item is Label and item.text==case.hint:showed_hint=true
+		check(showed_hint,"Devolutiva específica · "+case.title)
+		match realm:
+			2,4:click(case.choices[case.correct])
+			3:
+				for press in 9:click("+20 m")
+				click("Registrar cota")
+			5:
+				for control in g.ui.view.get_children():
+					if control is Button and control.toggle_mode:control.button_pressed=true
+				click("Testar comando")
+		check(studies.solved(realm),"Mudança regional concluída · "+case.title)
+		check(g.map_waypoint().x<0,"Guia devolve o controle ao objetivo da campanha")
+		click("Voltar à estrada")
+		g.return_title()
+		g.continue_game()
+		var xp=Saga.data.xp
+		g.interact()
+		click("Voltar à estrada")
+		check(studies.solved(realm) and Saga.data.xp==xp,"Conclusão persistente sem prêmio duplicado · "+case.title)
+		match realm:
+			2:
+				walk_to(base+studies.RESULTS+Vector2.DOWN*8)
+				g.interact()
+				check(Saga.data.expedition.get("marker_10,1",false),"Marco dos Oleiros utilizável")
+				g.ui.play()
+			3:
+				var crossing=case.cells[2]*Vector2i(48,32)+Vector2i(34,8)
+				check(g.world.terrain.get_cell_atlas_coords(crossing).x==12 and not g.world.trail.grid.is_point_solid(crossing),"Passarela alta transitável")
+			4:
+				walk_to(sectors.origin(case.cells[1])+studies.RESULTS+Vector2.DOWN*8)
+				var herbs=Saga.data.herbs
+				g.interact()
+				g.interact()
+				check(Saga.data.herbs==herbs+4,"Colheita na margem restaurada paga uma vez")
+			5:
+				walk_to(base+studies.RESULTS+Vector2.DOWN*8)
+				g.interact()
+				check(g.world.room_type=="field_vault","Entrada ao depósito liberado")
+				walk_to(Vector2(367,191))
+				g.interact()
+				click("Guardar o torque")
+				g.ui.bag()
+				click("Acessórios")
+				click("Torque de cobre")
+				check(Saga.data.charm=="Torque de cobre" and Saga.power()==12+2*Saga.level(),"Torque equipado pela mochila")
+				g.ui.play()
+				walk_to(field.LODGE_EXIT)
+				g.interact()
+	for service_cell in [Vector2i(5,2),Vector2i(8,1),Vector2i(8,6),Vector2i(4,4),Vector2i(1,6)]:
+		walk_to(sectors.origin(service_cell)+field.Guilds.DOOR+Vector2.DOWN*10)
+		g.interact()
+		check(g.world.room_type=="field_service","Casa de ofício acessível · "+str(service_cell))
+		walk_to(field.Guilds.BENCH)
+		g.interact()
+		var service=field.Guilds.SERVICES[field.entry(service_cell)[2]][2]
+		click({"reading":"Consultar enciclopédia","care":"Consultar rondas","craft":"Trabalhar na bancada"}[service])
+		check(g.ui.mode in ["codex","care","care_index","bag"],"Serviço local abre sua interface · "+g.ui.mode)
+		g.ui.play()
+		walk_to(field.LODGE_EXIT)
+		g.interact()
+		check(sectors.at(g.hero.position)==service_cell,"Casa de ofício devolve à rua correta")
+	var chambers=field.Chambers
+	for room_cell in [Vector2i(10,2),Vector2i(10,6),Vector2i(7,4),Vector2i(3,6)]:
+		walk_to(sectors.origin(room_cell)+field.LODGE+Vector2.DOWN*10)
+		g.interact()
+		walk_to(chambers.PANEL)
+		g.interact()
+		check(g.world.room_type=="field_cave","Parede oculta antes da pista")
+		walk_to(Vector2(213,112))
+		g.interact()
+		click("Examinar a parede")
+		walk_to(chambers.PANEL)
+		g.interact()
+		check(g.world.room_type=="field_chamber" and g.enemies.size()==1,"Câmara secreta com sentinela · "+str(room_cell))
+		g.return_title()
+		g.continue_game()
+		check(g.world.room_type=="field_chamber" and field.return_cell()==room_cell,"Salvamento dentro da câmara")
+		if g.enemies.size()==1:g.enemies[0].hit(500)
+		walk_to(chambers.KEEPER)
+		var witness=g.world.nearest(g.hero.position)
+		check(witness!=null and witness.art.texture!=null,"Testemunha visível na câmara")
+		g.interact()
+		click("Receber")
+		var i=chambers.index_for(field.entry(room_cell))
+		check(Saga.data.expedition.get("archive_"+chambers.KEYS[i],false),"Relíquia da testemunha · "+chambers.ITEMS[i])
+		walk_to(field.LODGE_EXIT)
+		g.interact()
+		check(g.world.room_type=="field_cave","Retorno à galeria de origem")
+		walk_to(field.LODGE_EXIT)
+		g.interact()
+		check(not g.world.interior and sectors.at(g.hero.position)==room_cell,"Retorno à entrada externa original")
+	for realm in range(2,6):
+		var cell=field.Caravan.today(realm)
+		var place=sectors.origin(cell)+field.Caravan.Dock
+		walk_to(place)
+		g.interact()
+		click("Aceitar a carta")
+		Saga.data.world_minutes+=1440
+		g.world.update_caravans(field.Weather.day(Saga.data.world_minutes))
+		check(g.world.nearest(place)==null or g.world.nearest(place).tag!="field_caravan","Caravana muda de parada no outro dia")
+		walk_to(sectors.origin(field.Caravan.Recipients[realm-2])+studies.DESK)
+		g.interact()
+		click("Entregar a carta")
+		check(Saga.data.expedition.get("letter_"+str(realm),0)==2,"Carta entregue a outro reino")
+	var lava_cell=Vector2i(2,6)
+	var lava
+	walk_to(sectors.origin(lava_cell)+sectors.CROSSROAD)
+	for p in g.world.terrain.get_used_cells_by_id(2):
+		if sectors.at(g.world.trail.center(p))==lava_cell:
+			lava=p
+			break
+	check(lava!=null,"Rio de lava com colisão própria")
+	if lava!=null:
+		var blocked=g.world.trail.center(lava)
+		walk_to(blocked)
+		g.return_title()
+		g.continue_game()
+		check(g.hero.position!=blocked and sectors.at(g.hero.position)==lava_cell and g.world.trail.can_stand(g.hero.position),"Recuperação de posição antiga sobre terreno novo")
+	for pair in [[Vector2i(7,1),Vector2i(8,1)],[Vector2i(9,3),Vector2i(9,4)],[Vector2i(8,6),Vector2i(7,6)],[Vector2i(4,6),Vector2i(3,6)]]:
+		await cross_open_border(pair[0],pair[1])
+	check(Saga.data.learned.size()==29 and Saga.data.won and Saga.data.chapter==6,"Trabalhos de campo preservam o fim da campanha")
+
 func run():
 	await get_tree().process_frame
 	check(g.ui.mode=="menu","Menu inicial")
@@ -468,6 +675,8 @@ func run():
 	check_care_rounds()
 	check_weather()
 	await check_expansion()
+	g.ui.play()
+	await check_territories()
 	print("ATLAS: %d verificações; %d falhas."%[checks,failures.size()])
 	get_tree().quit(0 if failures.is_empty() else 1)
 

@@ -225,9 +225,10 @@ func journal():
 	button_icon(button(view,"Habilidades",108,396,223,40,skills),"lamina")
 	button_icon(button(view,"Enciclopédia",347,396,223,40,codex),"diario")
 	button_icon(button(view,"Relações e cartas",586,396,265,40,memories),"interagir")
-	button(view,"Boletim das margens",315,449,252,38,func():weather_page(mini(game.region(),5)))
-	button(view,"Caderno de rondas · %d/6"%care_count(),586,449,265,38,care_index)
-	footer()
+	button(view,"Trabalhos de campo",108,449,178,38,Expedition.Studies.journal.bind(self,clampi(cur,2,5)))
+	button(view,"Boletim das margens",295,449,179,38,func():weather_page(mini(game.region(),5)))
+	button(view,"Caderno de rondas · %d/6"%care_count(),483,449,198,38,care_index)
+	button(view,"Voltar à aventura",690,449,161,38,play,true)
 	focus_default()
 
 func memories():
@@ -289,6 +290,9 @@ func accessories():
 			var s=Saga.regions[i].side_item
 			button(view,s+("  · equipado" if Saga.data.charm==s else "  · +2 de ataque"),108+(row%2)*370,160+int(row/2)*55,353,45,func():Saga.data.charm=s;Saga.save();accessories())
 			row+=1
+	if Saga.data.expedition.get("torque",false):
+		button(view,"Torque de cobre · "+("equipado" if Saga.data.charm=="Torque de cobre" else "+4 de ataque"),108+(row%2)*370,160+int(row/2)*55,353,45,func():Saga.data.charm="Torque de cobre";Saga.save();accessories())
+		row+=1
 	if row==0:label(view,"Ajude os habitantes nas missões locais para receber um acessório.",108,170,740,60,19)
 	button(view,"Voltar à mochila",108,449,191,38,bag,true)
 	focus_default()
@@ -368,11 +372,14 @@ func regional_page():
 	map.waypoint=game.map_waypoint()
 	if not game.world.interior:map.mission=Sectors.at(game.route_target())
 	map.location=Saga.origin(mini(game.region(),5))+Sectors.CROSSROAD if game.world.interior else game.hero.position
+	if game.world.interior and game.world.room_type.begins_with("field_"):
+		map.location=Sectors.origin(Expedition.return_cell())+Sectors.CROSSROAD
 	map.clip_contents=true
 	view.add_child(map)
 	rect(map,108,153,493,256)
 	var detail=label(view,"",622,154,221,94,19,PALE,true)
 	var route=button(view,"Marcar destino",620,261,228,42,func():
+		Saga.data.expedition.erase("field_track")
 		Saga.data.expedition.waypoint=Sectors.key(regional_selection)
 		Saga.data.rain_route=false
 		Saga.data.care_route=-1
@@ -389,7 +396,7 @@ func regional_page():
 	update.call(regional_selection)
 	button(view,"−",620,368,106,40,map.change_zoom.bind(-.25))
 	button(view,"+",742,368,106,40,map.change_zoom.bind(.25))
-	label(view,"● Você     ◆ Objetivo     ■ Serviço",109,411,490,29,14,MUTED)
+	label(view,"● Você     ◆ Objetivo     ■ Serviço     ▲ Galeria",109,411,490,29,14,MUTED)
 	button(view,"Mapa do mundo",108,449,168,38,map_page)
 	button(view,"Retomar",288,449,136,38,play,true)
 	if game.map_waypoint().x>=0:

@@ -39,6 +39,7 @@ var room_type="hall"
 var interior=false
 var region=0
 var game
+var scenery_textures:Dictionary={}
 var atlas:TileSet
 var hero
 var nature_rng=RandomNumberGenerator.new()
@@ -46,9 +47,11 @@ var ambient=0.0
 var destination=Vector2.ZERO
 var last_restored=-1
 var nursery_plants:Array=[]
+var caravans:Array=[]
+var caravan_day:=-1
 var loaded:Dictionary={}
 var current_sector:=Vector2i(-1,-1)
-var pending_update:=false
+var fresh_hubs:Array[Vector2i]=[]
 var queued_sectors:Array[Vector2i]=[]
 var hub_rng_states:Array[int]=[]
 
@@ -79,6 +82,15 @@ func configure(owner_game):
 		for i in 34: source.create_tile(Vector2i(i,j))
 	atlas.add_source(source,0)
 	Frontier.register_tiles(atlas)
+	var lava=TileSetAtlasSource.new()
+	lava.texture=preload("res://mapas/lava.png")
+	lava.texture_region_size=Vector2i(16,16)
+	for k in 3:lava.create_tile(Vector2i(k,0))
+	atlas.add_source(lava,2)
+	for k in 3:
+		var tile=lava.get_tile_data(Vector2i(k,0),0)
+		tile.set_collision_polygons_count(0,1)
+		tile.set_collision_polygon_points(0,0,PackedVector2Array([Vector2(-8,-8),Vector2(8,-8),Vector2(8,8),Vector2(-8,8)]))
 	for j in 7:
 		for k in [8,9,10,16]:
 			var td=source.get_tile_data(Vector2i(k,j),0)
@@ -93,7 +105,9 @@ func rebuild(inside:bool,r:int,room:String="hall",entry:Vector2=Vector2.ZERO):
 		ch.queue_free()
 	sites.clear()
 	nursery_plants.clear()
+	caravans.clear()
 	loaded.clear()
+	fresh_hubs.clear()
 	queued_sectors.clear()
 	current_sector=Vector2i(-1,-1)
 	mentors.clear()
@@ -113,10 +127,11 @@ func rebuild(inside:bool,r:int,room:String="hall",entry:Vector2=Vector2.ZERO):
 	if inside:
 		var frontier=Frontier.id_from_room(room_type)
 		if frontier>=0:Frontier.build(self,frontier)
-		elif room_type.begins_with("field_"):Expedition.build_room(self,r,room_type=="field_cave")
+		elif room_type.begins_with("field_"):Expedition.build_room(self,r,room_type)
 		elif room_type=="crypt":build_crypt(r)
 		else:build_room(r)
 	else:
+		trail.start_exterior()
 		walls(Sectors.bounds())
 		stream(entry)
 	if inside:trail.rebuild(self)
@@ -152,7 +167,6 @@ func stream(position_to_load:Vector2,immediate:bool=true):
 	# several frames, prioritizing the player if entering via a warp.
 	var batch=queued_sectors.size() if immediate else mini(1,queued_sectors.size())
 	for i in batch:load_sector(queued_sectors.pop_front())
-	pending_update=true
 	refresh()
 
 func unload_sector(cell:Vector2i):
@@ -160,6 +174,7 @@ func unload_sector(cell:Vector2i):
 	for node in group.nodes:
 		if not is_instance_valid(node):continue
 		sites.erase(node)
+		caravans.erase(node)
 		mentors.erase(node)
 		residents.erase(node)
 		nursery_plants.erase(node)
@@ -175,6 +190,7 @@ func unload_sector(cell:Vector2i):
 	for y in 32:
 		for x in 48:terrain.erase_cell(base+Vector2i(x,y))
 	loaded.erase(cell)
+	trail.sync_sector(self,cell)
 
 func load_sector(cell:Vector2i):
 	var realm=Sectors.realm_at(cell)
@@ -183,9 +199,11 @@ func load_sector(cell:Vector2i):
 		nature_rng.state=hub_rng_states[realm]
 		build_region(realm)
 		game.populate_hub(realm)
+		fresh_hubs.append(cell)
 	else:
 		Expedition.paint(self,cell,realm)
 	loaded[cell]={"nodes":objects.get_children().slice(previous)}
+	if cell!=Sectors.hub(realm):trail.sync_sector(self,cell)
 
 func place(pos:Vector2,texture:Texture2D,tag="",title="",solid=true,shadow=13.0):
 	var n=Lugar.new()
@@ -199,7 +217,8 @@ func prop(pos:Vector2,idx:int,tag="",title="",solid=true,shadow=13.0):
 	return place(pos,load("res://mapas/p%d.png"%idx),tag,title,solid,shadow)
 
 func margem(pos:Vector2,art:String,tag="",title="",solid=true,shadow=13.0):
-	return place(pos,load("res://mapas/margens/%s.png"%art),tag,title,solid,shadow)
+	if not scenery_textures.has(art):scenery_textures[art]=load("res://mapas/margens/%s.png"%art)
+	return place(pos,scenery_textures[art],tag,title,solid,shadow)
 
 func detail(pos:Vector2,idx:int,blocks:bool=false,radius:float=7):
 	return place(pos,load("res://mapas/biomas/%02d.png"%idx),"","",blocks,radius)
@@ -355,11 +374,11 @@ func channel_x(c:int,y:int)->int:
 func refresh():
 	for plant in nursery_plants:
 		plant.visible=Saga.region_at(plant.position)==int(Saga.data.rain_recipient)
-	if not interior and (last_restored!=Saga.data.chapter or pending_update):
-		pending_update=false
+	if not interior and (last_restored!=Saga.data.chapter or not fresh_hubs.is_empty()):
+		var chapter_changed=last_restored!=Saga.data.chapter
 		last_restored=Saga.data.chapter
 		for c in 6:
-			if not loaded.has(Sectors.hub(c)):continue
+			if not loaded.has(Sectors.hub(c)) or (not chapter_changed and Sectors.hub(c) not in fresh_hubs):continue
 			var base=Vector2i(Saga.origin(c)/16)
 			for y in [15,16,17]:
 				for x in 3:
@@ -368,7 +387,8 @@ func refresh():
 			if c<last_restored:
 				for x in range(25,35):
 					terrain.set_cell(base+Vector2i(x,21),0,Vector2i(17 if c==4 else 13,c))
-		trail.rebuild(self)
+			trail.sync_sector(self,Sectors.hub(c))
+		fresh_hubs.clear()
 	for n in sites:
 		if not n is Lugar:continue
 		var c=region if interior else Saga.region_at(n.position)
@@ -382,10 +402,16 @@ func refresh():
 		if n.tag=="cache" and str(c) in Saga.data.chests:n.modulate=Color("#b5bdac")
 		n.queue_redraw()
 
+func update_caravans(day:int):
+	if day!=caravan_day:
+		caravan_day=day
+		Expedition.Caravan.refresh(self)
+
 func nearest(p:Vector2):
 	var best=null
 	var dist=38.0
 	for n in sites+mentors+residents:
+		if not n.visible:continue
 		var d=p.distance_to(n.position)
 		if d<dist:
 			dist=d

@@ -54,7 +54,7 @@ const PLATES=["lobo","lodo","morcego","rato","javali","arqueiro","cavaleiro","es
 static func species_for(region:int,kind:int,tag:String,boss:bool)->String:
 	if boss:return GUARDIANS[region]
 	if tag=="treino":return "pedra"
-	if tag.begins_with("deep_"):return "aranha"
+	if tag.begins_with("deep_"):return ["aranha","rato","pedra","espectro","ent","lava"][region]
 	if tag=="trail_pinheiros":return "lobo"
 	if tag.begins_with("cripta"):return CRYPT_BEASTS[region]
 	if tag.begins_with("side"):return "cavaleiro" if region==2 else "cristal"

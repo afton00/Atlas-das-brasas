@@ -54,7 +54,7 @@ func reset():
 func level() -> int: return 1 + int(float(data.xp)/100)
 func max_hp() -> float: return 94.0 + level()*6.0 + (18 if data.armor else 0)
 func max_mp() -> float: return 56.0 + level()*4.0
-func power() -> int: return 8 + level()*2 + (2 if data.charm!="" else 0)
+func power() -> int: return 8 + level()*2 + (4 if data.charm=="Torque de cobre" else 2 if data.charm!="" else 0)
 func has_skill(i): return i in data.skills
 func chapter_lessons(c):
 	return lessons.filter(func(l): return int(l.ch)==c)
